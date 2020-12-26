@@ -1,3 +1,3 @@
 # jgames
 
-Editing from local computer
+This repository will contain the code of the JavaGames learning pills.
