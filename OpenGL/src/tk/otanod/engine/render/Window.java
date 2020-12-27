@@ -33,6 +33,11 @@ public class Window {
 	private Frame frame;
 	private GLCanvas canvas;
 	
+	Model m;
+	public Window(Model m) {
+		this.m = m;
+	}
+	
 	public void createDisplay(String title) {
 		frame = createWindowAWT(title);
 		//frame = createWindowSWING(title);
@@ -50,7 +55,6 @@ public class Window {
 		canvas.destroy();
 		frame.dispose();
 	}
-	
 	
 	public void loopWindow() {
 		// Method 1 (JOGL)
@@ -74,7 +78,7 @@ public class Window {
 
 		// Canvas
 		GLCanvas canvas = new GLCanvas(capabilities); 						// jogl
-		CanvasListener cl = new CanvasListener();
+		CanvasListener cl = new CanvasListener(m);
 		canvas.addGLEventListener(cl);
 		
 		//frame.add(canvas);

@@ -20,10 +20,16 @@ SOFTWARE.
 
 public class CanvasListener implements GLEventListener {
 
+	Model m;
+	public CanvasListener(Model m) {
+		this.m = m;
+	}
+	
 	@Override
 	public void init(GLAutoDrawable drawable) {
 		
 		System.out.println("init started");
+		System.out.println("GL thread : " + Thread.currentThread().getName());
 		
 		GL4ES3 gl = drawable.getGL().getGL4ES3();
 		
@@ -95,7 +101,7 @@ public class CanvasListener implements GLEventListener {
 		
 		gl.glCullFace(GL4ES3.GL_BACK); 		// removed the faces NOT looking to camera (camera is at (0,0,0), removes triangles looking to -Z infinite))
 		// Cull reversed
-		// gl.glCullFace(GL4ES3.GL_FRONT); 	// removed the faces NOT looking to camera (to -z (where the camera is))
+		//gl.glCullFace(GL4ES3.GL_FRONT); 	// removed the faces NOT looking to camera (to +Z (where the camera is))
 
 		gl.glLineWidth(10); 				// for TEST when using lines
 
@@ -137,11 +143,10 @@ public class CanvasListener implements GLEventListener {
 		gl.glClearColor(0.5f, 0.5f, 0.95f, 1.0f);
 		gl.glClear(GL4ES3.GL_COLOR_BUFFER_BIT | GL4ES3.GL_DEPTH_BUFFER_BIT);
 
+		m.display(drawable);
 		
 		displayFPS(5);
 	}
-
-
 
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
@@ -150,8 +155,7 @@ public class CanvasListener implements GLEventListener {
 		
 		System.out.println(String.format("Reshape => x: %d y: %d width: %d height: %d", x,y,width,height));
 	}
-	
-	
+		
 	private long time1 = System.nanoTime();
 	private long time2 = System.nanoTime();
 	private long delta = 0;

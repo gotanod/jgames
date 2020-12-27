@@ -14,18 +14,22 @@ SOFTWARE.
 
 package tk.otanod.demo;
 
+import tk.otanod.engine.render.Model;
 import tk.otanod.engine.render.Window;
 
 public class Main {
 
 	public static void main(String args[]) {
 		
-		Window w = new Window();
+		System.out.println("Main thread : " + Thread.currentThread().getName());
+		
+		Model m = new Model();
+		
+		Window w = new Window(m);
 
-		w.createDisplay("DEMO 1");
-		
-		w.updateDisplay();
-		
+		w.createDisplay("DEMO 2");
+
+		//w.updateDisplay();
 		w.loopWindow();
 			
 	}
