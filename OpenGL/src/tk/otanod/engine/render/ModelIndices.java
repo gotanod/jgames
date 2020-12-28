@@ -17,6 +17,7 @@ package tk.otanod.engine.render;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +25,7 @@ import com.jogamp.opengl.GL4ES3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
-public class Model implements GLEventListener {
+public class ModelIndices implements GLEventListener {
 
     private int[] aAttribLocation = new int[10];
 	private static final int ATTRIB_POSITION = 0;
@@ -32,7 +33,7 @@ public class Model implements GLEventListener {
 	
 	private boolean isInitialized = false;
 	
-	public Model() {
+	public ModelIndices() {
 		loadModelData();
 	}
 	
@@ -50,11 +51,9 @@ public class Model implements GLEventListener {
 	public void display(GLAutoDrawable drawable) {
 		if ( this.isInitialized ) {
 			draw(drawable);
-			debug("MODEL", "display model");
 		} else {
 			initialize(drawable);
 			this.isInitialized = true;
-			debug("MODEL", "init model");
 		}
 		
 	}
@@ -65,47 +64,49 @@ public class Model implements GLEventListener {
 	}
 	
 	
-	/*****************************************
-	 * 
-	 *****************************************/
-	int nTriangles;
-	float[] positions;
-	float[] colors;
-	float[] textureCoords;
+	/***************************************************************
+	 * https://www.khronos.org/opengl/wiki/Vertex_Specification
+	 * https://learnopengl.com/Getting-started/Hello-Triangle
+	 ***************************************************************/
+	private int nTriangles;
+	private int nElements;
+	private int[] indices;
+	private float[] positions;
+	private float[] colors;
+	private float[] textureCoords;
+	
 	private void loadModelData() {
-		
-		nTriangles = 2;
 		
 		// Very important, camera is located at (0,0,0) looking to -Z axis
 		// GL renders the cube [-1,1][-1,1][-1,1] but only the back half part z = ]0,-1] the other side is behind the camera [1,0]
 		// Create vertex data
-		positions = new float[] {	                 
-				-0.8f,  -0.8f,  -0.5f, 		// bottom-left
-				 0.8f,  -0.8f,  -0.5f, 		// bottom-right
+		this.positions = new float[] {	                 
+				-0.0f,  -0.0f,  -0.5f, 		// bottom-left
+				 0.8f,  -0.0f,  -0.5f, 		// bottom-right
+ 			    -0.0f,   0.8f,  -0.5f, 		// top-left
 				 0.8f,   0.8f,  -0.5f, 		// top-right
-				 0.8f,   0.8f,  -0.5f, 		// top-right
-				-0.8f,   0.8f,  -0.5f, 		// top-left
-				-0.8f,  -0.8f,  -0.5f, 		// bottom-left		          
 		};
 		
+		this.nTriangles = this.positions.length / 9;
+		
+		this.indices = new int[] { 0, 1, 2, 2, 1, 3 };
+		this.nElements = indices.length;
+		
 		// Create color data
-		colors = new float[] {							
+		this.colors = new float[] {							
 				1.0f, 0.0f, 0.0f, 1.0f,		// bottom-left
 				0.0f, 1.0f, 0.0f, 1.0f,		// bottom-right
-				0.0f, 0.0f, 1.0f, 1.0f,		// top-right
-				1.0f, 0.0f, 0.0f, 1.0f,		// top-right
-				0.0f, 1.0f, 0.0f, 1.0f,		// top-left
-				0.0f, 0.0f,	1.0f, 1.0f, 	// bottom-left
+				0.0f, 0.0f, 1.0f, 1.0f,		// top-left
+				0.4f, 0.4f, 0.1f, 1.0f,		// top-right
+
 		};   
 		
 		// Create texture data
-		textureCoords = new float[] {		
+		this.textureCoords = new float[] {		
 				0.0f, 0.0f,		// bottom-left
 				1.0f, 0.0f, 	// bottom-right
-				1.0f, 1.0f, 	// top-right
-				1.0f, 1.0f, 	// top-right
 				0.0f, 1.0f, 	// top-left
-				0.0f, 0.0f,		// bottom-left    				
+				1.0f, 1.0f, 	// top-right
 		};
 	}
 	
@@ -133,39 +134,83 @@ public class Model implements GLEventListener {
 		
 		// 3. Add data to the VAO	
 		// 3.2 Create a VBO
-		this.nVBOs = 2;
+		this.nVBOs = 3;
 		this.vbos = new int[this.nVBOs];
 		gl.glGenBuffers(this.nVBOs, this.vbos, 0);					// Buffer object names returned by a call to glGenBuffers are not returned by subsequent calls, unless they are first deleted with glDeleteBuffers.
 		
-		addVBOtoVAO(gl, positions, this.vbos[0], 3, ATTRIB_POSITION);
-		addVBOtoVAO(gl, colors, this.vbos[1], 4, ATTRIB_COLOR);
+		addEBOtoVAO(gl, this.indices, this.vbos[0]);
+		addVBOtoVAO(gl, this.positions, this.vbos[1], 3, ATTRIB_POSITION);
+		addVBOtoVAO(gl, this.colors, this.vbos[2], 4, ATTRIB_COLOR);
 
 		// 4. Unbind the VAO, just binding the default 0 VAO (0=no using VAOs)
 		gl.glBindVertexArray(0); 							// Disable our Vertex Array Object  
 	}
 
-	private void addVBOtoVAO(GL4ES3 gl, float[] mData, int vbo, int sizePerElement, int attrib) {
+	private void addEBOtoVAO(GL4ES3 gl, int[] mData, int ebo) {
+		// 3.1 Prepare the data, we need a IntBuffer instead of a Int Array
+		IntBuffer ibData = getIntBuffer(mData);
+
+		// 3.3 Transfer the data to the GPU
+		final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;  				// float has 4 bytes
+		int numBytes = (int) (mData.length * BYTES_PER_INT);
+		
+		//fbVertices = null; // It is OK to release CPU vertices memory after transfer to GPU        
+		gl.glBindBuffer(GL4ES3.GL_ELEMENT_ARRAY_BUFFER, ebo);
+		gl.glBufferData(GL4ES3.GL_ELEMENT_ARRAY_BUFFER, numBytes, ibData, GL4ES3.GL_STATIC_DRAW);
+		
+		// 3.5 Unbind the EBO
+		// VERY IMPORTANT
+		// A VAO stores the glBindBuffer calls when the target is GL_ELEMENT_ARRAY_BUFFER. 
+		// This also means it stores its unbind calls 
+		// so make sure you don't unbind the element array buffer before unbinding your VAO, 
+		// otherwise it doesn't have an EBO configured. 
+		//gl.glBindBuffer(GL4ES3.GL_ELEMENT_ARRAY_BUFFER, 0);						//	NEVER unbind the ELEMENT_ARRAY_BUFFER inside teh VAO
+	}
+
+	private void addVBOtoVAO(GL4ES3 gl, float[] mData, int vbo, int componentsPerVertex, int attrib) {
 		// 3.1 Prepare the data, we need a FloatBuffer instead of a Float Array
 		FloatBuffer fbData = getFloatBuffer(mData);
 
-		// 3.3 Transfer the data to the GPU
+		// 3.2 Transfer the data to the GPU
 		final int BYTES_PER_FLOAT = Float.SIZE / Byte.SIZE;  				// float has 4 bytes
 		int numBytes = (int) (mData.length * BYTES_PER_FLOAT);
-		gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, vbo);
-		gl.glBufferData(GL4ES3.GL_ARRAY_BUFFER, numBytes, fbData, GL4ES3.GL_STATIC_DRAW);
-		//gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, 0);  //unbind
+		gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, vbo);						// Enables the VBO, to write there the data and link it later with the VAO slot
+		gl.glBufferData(GL4ES3.GL_ARRAY_BUFFER, numBytes, fbData, GL4ES3.GL_STATIC_DRAW);	// transfers data to the VBO
+		//gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, 0);						
 		
-		// 3.4 
-		//gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, vbo);			//	Bind vertices buffer
-		int shaderPositionGLSL = this.aAttribLocation[attrib];
+		// 3.3 Add the VBO to the VAO 
+		//gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, vbo);
+		int shaderPositionGLSL = this.aAttribLocation[attrib];				// Get the slot used by the GLSL program, that we saved in the array aAttribLocation 	
 		//	gl.glBindVertexArray(this.vaos[0]);								// done in calling method
-		gl.glEnableVertexAttribArray(shaderPositionGLSL);					//	Enable the vertex array
+		gl.glEnableVertexAttribArray(shaderPositionGLSL);					// Enable the VAO slot (matches the GLSL location) and link it with the previous bound VBO
 		debug("glEnableVertexAttribArray", "" + gl.glGetError());			// Error 1282 means that VAO is not active
-		gl.glVertexAttribPointer(shaderPositionGLSL, sizePerElement, GL4ES3.GL_FLOAT, false , 0 , 0);	//	 glVertexAttribPointer( ShaderAttibIndex, sizePerElement, TypeValue, normalized?, stride, offset
+		gl.glVertexAttribPointer(shaderPositionGLSL, componentsPerVertex, GL4ES3.GL_FLOAT, false , 0 , 0);	//	 glVertexAttribPointer( ShaderAttibIndex, sizePerElement, TypeValue, normalized?, stride, offset
 		debug("glVertexAttribPointer", "" + gl.glGetError());
 
 		// 3.5 Unbind the VBO
 		gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, 0);						//	Unbind buffers
+	}
+	
+	private IntBuffer getIntBuffer(int[] data) {
+		// Bytes per Int (may vary on each system)
+		final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;  				
+		// Stride
+		//int vertexStride = COORDS_PER_VERTEX * BYTES_PER_VERTEX; 			  
+		// Total bytes needed for the buffer
+		int numBytes = (int) (data.length * BYTES_PER_INT);
+		
+		// initialize vertex byte buffer for shape coordinates
+		ByteBuffer bb = ByteBuffer.allocateDirect(numBytes);       	
+		// use the device hardware's native byte order
+		bb.order(ByteOrder.nativeOrder());
+		// create a int point buffer from the ByteBuffer
+		IntBuffer ibData = bb.asIntBuffer();
+		// add the coordinates to the IntBuffer
+		ibData.put(data);
+		// set the buffer to read the first coordinate
+		ibData.position(0);         
+
+		return(ibData);
 	}
 	
 	private FloatBuffer getFloatBuffer(float[] data) {
@@ -186,7 +231,7 @@ public class Model implements GLEventListener {
 		fbData.put(data);
 		// set the buffer to read the first coordinate
 		fbData.position(0);         
-
+		
 		return(fbData);
 	}
 
@@ -196,15 +241,17 @@ public class Model implements GLEventListener {
 
 		// 2: Use Program 
 		gl.glUseProgram(this.programGLSL);
-		debug("glGetError", "" + gl.glGetError());
 		
 		// 4: Update the Uniforms
 		
 		// 5: draw the VAOs
-		gl.glBindVertexArray(this.vaos[0]); 						// Bind our Vertex Array Object  
-		gl.glDrawArrays(GL4ES3.GL_TRIANGLES, 0, this.nTriangles*3); // Draw triangles,  OFFSET, COUNT  FIRST OBJECT
-		//DEBUG //gl.glDrawArrays(GL4ES3.GL_LINE_LOOP, 0, this.nTriangles*3); // Draw lines,  OFFSET, COUNT  FIRST OBJECT
-		//DEBUG //gl.glDrawArrays(GL4ES3.GL_POINTS, 0, this.nTriangles*3); // Draw points,  OFFSET, COUNT  FIRST OBJECT
+		gl.glBindVertexArray(this.vaos[0]); 												// Bind our Vertex Array Object  
+		//gl.glDrawArrays(GL4ES3.GL_TRIANGLES, 0, this.nTriangles*3); 						// Draw triangles,  OFFSET, COUNT  FIRST OBJECT
+		
+		// When using glDrawElements we're going to draw using indices provided in the element buffer object currently bound:
+		// Leave the ELEMENT_ARRAY_BUFFER bound inside the VAO, just avoid the unbind after creating it. And you don't need to call it here if it is already bound!!!
+		// gl.glBindBuffer(GL4ES3.GL_ELEMENT_ARRAY_BUFFER, this.vbos[0]);						
+		gl.glDrawElements(GL4ES3.GL_TRIANGLES, this.nElements, GL4ES3.GL_UNSIGNED_INT, 0); 	// DrawElements triangles, count, type,  OFFSET
 		
 		// 6: Unbind
 		gl.glBindVertexArray(0); 					// Unbind our Vertex Array Object or bind to default VAO
@@ -227,7 +274,7 @@ public class Model implements GLEventListener {
 		gl.glDeleteProgram(this.programGLSL);
 	}
 
-	public int getGLSLProgram(GL4ES3 gl) {
+	private int getGLSLProgram(GL4ES3 gl) {
 		
 		String sVertexShaderCode =
 				  "#if __VERSION__ >= 130\n" 		// GLSL 130+ uses in and out
@@ -246,7 +293,8 @@ public class Model implements GLEventListener {
 				
 				+ "void main(void) {\n" 
 				+ "  vColor = av4Color; \n" 	
-				+ "  gl_Position = av4Position; \n" 
+				+ "  gl_Position = av4Position; \n" 	// GLSL automatically add the w=1.0 if you pass 3 values instead of 4 
+				//+ "  gl_Position = vec4(av3Position, 1.0); \n"	// explicity adding the fourth value
 				+ "} ";
 
 		String sFragmentShaderCode =
@@ -265,6 +313,7 @@ public class Model implements GLEventListener {
 				+ "varying 	vec4 vColor; \n" 
 				+ "void main (void) { \n" 
 				+ "   gl_FragColor = vColor; \n"
+//				+ "   gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); \n"
 				+ "} ";
 						
 		if(gl.isGL3core()){
@@ -371,16 +420,21 @@ public class Model implements GLEventListener {
         this.aAttribLocation[ATTRIB_POSITION] = gl.glGetAttribLocation(mShaderProgram, "av4Position");
         this.aAttribLocation[ATTRIB_COLOR] 	  = gl.glGetAttribLocation(mShaderProgram, "av4Color");
         
-        // STEP 8: Use the program
-        //gl.glUseProgram(mShaderProgram);			// Done during the DRAW, each object can use different program
+        // STEP 8: Detach and delete the shaders, they are no longer needed after the program is linked and compiled
+        gl.glDetachShader(mShaderProgram, vertexShader);
+        gl.glDeleteShader(vertexShader);
+        gl.glDetachShader(mShaderProgram, fragmentShader);
+        gl.glDeleteShader(fragmentShader);
+        
+        // STEP 9: How to use it
+        // gl.glUseProgram(mShaderProgram);			// Done during the DRAW, each object can use different program
         // DRAW
-        // STEP 9: Unbind the program
-        //gl.glUseProgram(0);							// Unbind the current program
+        // gl.glUseProgram(0);							// Unbind the current program
         
         return(mShaderProgram);
 	}	
 
 	private void debug(String tag, String msg) {
-		//System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
 	}
 }

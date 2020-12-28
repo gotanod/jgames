@@ -1,5 +1,7 @@
 package tk.otanod.engine.render;
 
+import java.util.List;
+
 import com.jogamp.opengl.GL4ES3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
@@ -20,9 +22,9 @@ SOFTWARE.
 
 public class CanvasListener implements GLEventListener {
 
-	Model m;
-	public CanvasListener(Model m) {
-		this.m = m;
+	List<GLEventListener> models;
+	public CanvasListener(List<GLEventListener> models) {
+		this.models = models;
 	}
 	
 	@Override
@@ -138,13 +140,19 @@ public class CanvasListener implements GLEventListener {
 	
 	@Override
 	public void display(GLAutoDrawable drawable) {
+		// 1. Get the context
 		GL4ES3 gl = drawable.getGL().getGL4ES3();
 
+		// 2. Clear the screen color and depth buffer
 		gl.glClearColor(0.5f, 0.5f, 0.95f, 1.0f);
 		gl.glClear(GL4ES3.GL_COLOR_BUFFER_BIT | GL4ES3.GL_DEPTH_BUFFER_BIT);
 
-		m.display(drawable);
+		// 3. Draw all models
+		for( GLEventListener model: models ) {
+			model.display(drawable);
+		}
 		
+		// 4. update and display the FPS in the console
 		displayFPS(5);
 	}
 

@@ -14,7 +14,13 @@ SOFTWARE.
 
 package tk.otanod.demo;
 
-import tk.otanod.engine.render.Model;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.jogamp.opengl.GLEventListener;
+
+import tk.otanod.engine.render.ModelArray;
+import tk.otanod.engine.render.ModelIndices;
 import tk.otanod.engine.render.Window;
 
 public class Main {
@@ -23,12 +29,21 @@ public class Main {
 		
 		System.out.println("Main thread : " + Thread.currentThread().getName());
 		
-		Model m = new Model();
+		List<GLEventListener> models = new ArrayList<>();
+		// 3D model drawn with Arrays
+		GLEventListener m1 = new ModelArray();
+		models.add(m1);
+		// 3D model drawn with indices
+		GLEventListener m2 = new ModelIndices();
+		models.add(m2);
 		
-		Window w = new Window(m);
+		// AWT - OpenGL window
+		Window w = new Window(models);
 
+		// Init the windows/openGL
 		w.createDisplay("DEMO 2");
 
+		// Display the window (loop)
 		//w.updateDisplay();
 		w.loopWindow();
 			

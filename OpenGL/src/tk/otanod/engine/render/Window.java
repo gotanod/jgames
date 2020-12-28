@@ -16,10 +16,12 @@ package tk.otanod.engine.render;
 
 import java.awt.Frame;
 import java.awt.Point;
+import java.util.List;
 
 import javax.swing.JFrame;
 
 import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.FPSAnimator;
@@ -33,9 +35,9 @@ public class Window {
 	private Frame frame;
 	private GLCanvas canvas;
 	
-	Model m;
-	public Window(Model m) {
-		this.m = m;
+	List<GLEventListener> models;
+	public Window(List<GLEventListener> models) {
+		this.models = models;
 	}
 	
 	public void createDisplay(String title) {
@@ -78,7 +80,7 @@ public class Window {
 
 		// Canvas
 		GLCanvas canvas = new GLCanvas(capabilities); 						// jogl
-		CanvasListener cl = new CanvasListener(m);
+		CanvasListener cl = new CanvasListener(models);
 		canvas.addGLEventListener(cl);
 		
 		//frame.add(canvas);
