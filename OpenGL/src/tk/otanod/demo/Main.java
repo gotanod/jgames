@@ -21,6 +21,7 @@ import com.jogamp.opengl.GLEventListener;
 
 import tk.otanod.engine.render.ModelArray;
 import tk.otanod.engine.render.ModelIndices;
+import tk.otanod.engine.render.ModelIndicesTexture;
 import tk.otanod.engine.render.Window;
 
 public class Main {
@@ -36,12 +37,15 @@ public class Main {
 		// 3D model drawn with indices
 		GLEventListener m2 = new ModelIndices();
 		models.add(m2);
+		// 3D model drawn with indices and texture
+		GLEventListener m3 = new ModelIndicesTexture();
+		models.add(m3);
 		
 		// AWT - OpenGL window
 		Window w = new Window(models);
 
 		// Init the windows/openGL
-		w.createDisplay("DEMO 2");
+		w.createDisplay("DEMO 3");
 
 		// Display the window (loop)
 		//w.updateDisplay();
