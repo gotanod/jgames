@@ -143,7 +143,6 @@ public class ModelIndicesTexture implements GLEventListener {
 		
 		addEBOtoVAO(gl, this.indices, this.vbos[0]);
 		addVBOtoVAO(gl, this.positions, this.vbos[1], 3, ATTRIB_POSITION);
-		//addVBOtoVAO(gl, this.colors, this.vbos[2], 4, ATTRIB_COLOR);
 		addVBOtoVAO(gl, this.textureCoords, this.vbos[2], 2, ATTRIB_TEXTURE_COORDS);
 
 		// 4. Unbind the VAO, just binding the default 0 VAO (0=no using VAOs)
@@ -318,24 +317,24 @@ public class ModelIndicesTexture implements GLEventListener {
 	private int getGLSLProgram(GL4ES3 gl) {
 		
 		String sVertexShaderCode =
-				  "#if __VERSION__ >= 130\n" 				// GLSL 130+ uses in and out
-				+ "  #define attribute in\n" 				// instead of attribute and varying 
-				+ "  #define varying out\n" 				// used by OpenGL 3 core and later. 
+				  "#if __VERSION__ >= 130\n" 					// GLSL 130+ uses in and out
+				+ "  #define attribute in\n" 					// instead of attribute and varying 
+				+ "  #define varying out\n" 					// used by OpenGL 3 core and later. 
 				+ "#endif\n" 
 				
 				+ "#ifdef GL_ES \n" 
-				+ "  precision mediump float; \n" 			// Precision Qualifiers
-				+ "  precision mediump int; \n" 			// GLSL ES section 4.5.2
+				+ "  precision mediump float; \n" 				// Precision Qualifiers
+				+ "  precision mediump int; \n" 				// GLSL ES section 4.5.2
 				+ "#endif \n" 
 				
-				+ "attribute vec4  av4Position; \n" 		// the vertex shader
-				+ "attribute	vec2  av2TextureCoord; \n"	// Texture coords
+				+ "attribute vec4  av4Position; \n" 			// the vertex shader
+				+ "attribute	vec2  av2TextureCoord; \n"		// Texture coords
 				+ "varying   	vec2  vTextureCoord; \n" 
 				
 				+ "void main(void) {\n" 
 				+ "  vTextureCoord = av2TextureCoord; \n" 		
-				+ "  gl_Position = av4Position; \n" 	// GLSL automatically add the w=1.0 if you pass 3 values instead of 4 
-				//+ "  gl_Position = vec4(av3Position, 1.0); \n"	// explicity adding the fourth value
+				+ "  gl_Position = av4Position; \n" 			// GLSL automatically add the w=1.0 if you pass 3 values instead of 4 
+				//+ "  gl_Position = vec4(av3Position, 1.0); \n"	// explicitly adding the fourth value
 				+ "} ";
 
 		String sFragmentShaderCode =
@@ -355,7 +354,7 @@ public class ModelIndicesTexture implements GLEventListener {
 	            + "uniform sampler2D uSampler; \n"		// it will receive 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, 2 for GL_TEXTURE2, ... GL_TEXTURE15
 				+ "void main (void) { \n" 
 //				+ "   gl_FragColor = vColor; \n"
-//				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, 1.0 - vTextureCoord.t)).abgr; \n"
+//				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, 1.0 - vTextureCoord.t)).abgr; \n" // If the image is upside down, flip the T coordinate, use this line instead of next one
 				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)).abgr; \n"		// Image with ABGR format, loaded by GL as RGBA (default order) so we need to swizzle the components  // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_swizzle.txt
 				+ "} ";
 						
@@ -461,7 +460,6 @@ public class ModelIndicesTexture implements GLEventListener {
         // STEP 7: UNIFORM link to JAVA
         // Link GLSL with java
         this.aAttribLocation[ATTRIB_POSITION] 	= gl.glGetAttribLocation(mShaderProgram, "av4Position");
-//        this.aAttribLocation[ATTRIB_COLOR] 	 	= gl.glGetAttribLocation(mShaderProgram, "av4Color");
         this.aAttribLocation[ATTRIB_TEXTURE_COORDS] = gl.glGetAttribLocation(mShaderProgram, "av2TextureCoord");        
         this.aAttribLocation[ATTRIB_SAMPLER]	    = gl.glGetUniformLocation(mShaderProgram, "uSampler");        
         
