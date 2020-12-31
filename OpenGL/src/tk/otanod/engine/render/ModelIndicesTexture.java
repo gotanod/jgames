@@ -23,6 +23,9 @@ import com.jogamp.opengl.GL4ES3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
+import tk.otanod.libIO.ImageFile;
+import tk.otanod.libIO.RawImage;
+
 
 public class ModelIndicesTexture implements GLEventListener {
 
@@ -154,18 +157,18 @@ public class ModelIndicesTexture implements GLEventListener {
 		this.textureIDs = new int[this.nTextures];
 		gl.glGenTextures(this.nTextures, this.textureIDs, 0);
 		
-		Texture tex;
+		RawImage tex;
 		
 		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + 0);  				// activate the texture unit first before binding texture
-		tex = new Texture("./res/drawable/exodia_part1.jpg");
+		tex = ImageFile.loadFlippedImageFile("res/drawable/exodia_part1.jpg");
 		createTextureBitmapRGBA(gl, this.textureIDs[0], tex);
 		
 		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + 4);  				// activate the texture unit first before binding texture
-		tex = new Texture("./res/drawable/blank.png");
+		tex = ImageFile.loadFlippedImageFile("res/drawable/blank.png");
 		createTextureBitmapRGBA(gl, this.textureIDs[1], tex);
 		
 		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + 15);				// activate the texture unit first before binding texture
-		tex = new Texture("./res/drawable/wood_texture.png");
+		tex = ImageFile.loadFlippedImageFile("res/drawable/wood_texture.png");
 		createTextureBitmapRGBA(gl, this.textureIDs[2], tex);
 		
 		tex = null;			// after creating the texture (GPU) the image is no longer needed
@@ -477,7 +480,7 @@ public class ModelIndicesTexture implements GLEventListener {
         return(mShaderProgram);
 	}	
 
-	public void createTextureBitmapRGBA(GL4ES3 gl, int textureID, Texture tex) {
+	public void createTextureBitmapRGBA(GL4ES3 gl, int textureID, RawImage tex) {
     	    	
         gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
         //gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);

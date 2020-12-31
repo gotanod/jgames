@@ -23,6 +23,7 @@ import tk.otanod.engine.render.ModelArray;
 import tk.otanod.engine.render.ModelIndices;
 import tk.otanod.engine.render.ModelIndicesTexture;
 import tk.otanod.engine.render.ModelMVPIndicesTexture;
+import tk.otanod.engine.render.ModelMVPIndicesTextureOBJ;
 import tk.otanod.engine.render.Window;
 
 public class Main {
@@ -32,9 +33,9 @@ public class Main {
 		System.out.println("Main thread : " + Thread.currentThread().getName());
 		
 		List<GLEventListener> models = new ArrayList<>();
-		// 3D model drawn with Arrays
-		GLEventListener m1 = new ModelArray();
-		models.add(m1);
+//		// 3D model drawn with Arrays
+//		GLEventListener m1 = new ModelArray();
+//		models.add(m1);
 		// 3D model drawn with indices
 		GLEventListener m2 = new ModelIndices();
 		models.add(m2);
@@ -44,12 +45,15 @@ public class Main {
 		// 3D model drawn with indices and texture and MVP
 		GLEventListener m4 = new ModelMVPIndicesTexture();
 		models.add(m4);
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		GLEventListener m5 = new ModelMVPIndicesTextureOBJ();
+		models.add(m5);
 		
 		// AWT - OpenGL window
 		Window w = new Window(models);
 
 		// Init the windows/openGL
-		w.createDisplay("DEMO 5");
+		w.createDisplay("DEMO 6");
 
 		// Display the window (loop)
 		//w.updateDisplay();

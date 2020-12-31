@@ -23,6 +23,8 @@ import com.jogamp.opengl.GL4ES3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
+import tk.otanod.libIO.ImageFile;
+import tk.otanod.libIO.RawImage;
 import tk.otanod.libMath.M4f;
 import tk.otanod.libMath.V3f;
 
@@ -237,10 +239,10 @@ public class ModelMVPIndicesTexture implements GLEventListener {
 		this.textureIDs = new int[this.nTextures];
 		gl.glGenTextures(this.nTextures, this.textureIDs, 0);
 		
-		Texture tex;
+		RawImage tex;
 		textureUnit = 3;
 		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + textureUnit);  				// activate the texture unit first before binding texture
-		tex = new Texture("Q:/00. Java/gotanod/jgames/OpenGL/res/drawable/exodia_part1.jpg");
+		tex = ImageFile.loadFlippedImageFile("res/drawable/exodia_part1.jpg");
 		createTextureBitmapRGBA(gl, this.textureIDs[0], tex);
 		
 		tex = null;			// after creating the texture (GPU) the image is no longer needed
@@ -386,7 +388,7 @@ public class ModelMVPIndicesTexture implements GLEventListener {
 		angleRadX += 0.0017f;
 		
 		// Calculate the resultant Project-View-Model matrix
-		M4f PVM = m4World.clone().scale(0.5f, 0.5f, 0.5f).rotateYaxisCCW(angleRadY).rotateXaxisCCW(angleRadX).setTranslate(-1.0f,  -1.0f,  -3.0f).preMultiply(m4View).preMultiply(m4Projection);
+		M4f PVM = m4World.clone().scale(0.5f, 0.5f, 0.5f).rotateYaxisCCW(angleRadY).rotateXaxisCCW(angleRadX).setTranslate(-1.0f,  1.0f,  -3.0f).preMultiply(m4View).preMultiply(m4Projection);
 		
 		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_MVP], 1, false, PVM.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
 		
@@ -589,7 +591,7 @@ public class ModelMVPIndicesTexture implements GLEventListener {
         return(mShaderProgram);
 	}	
 
-	public void createTextureBitmapRGBA(GL4ES3 gl, int textureID, Texture tex) {
+	public void createTextureBitmapRGBA(GL4ES3 gl, int textureID, RawImage tex) {
     	    	
         gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
         //gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);

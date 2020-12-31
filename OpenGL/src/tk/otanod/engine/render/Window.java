@@ -80,7 +80,7 @@ public class Window {
 
 		// Canvas
 		GLCanvas canvas = new GLCanvas(capabilities); 						// jogl
-		CanvasListener cl = new CanvasListener(models);
+		CanvasListener cl = new CanvasListener(models, WIDTH, HEIGHT);
 		canvas.addGLEventListener(cl);
 		
 		//frame.add(canvas);
@@ -100,10 +100,11 @@ public class Window {
 		Frame frame = new Frame(); 				// creating instance of JFrame
 		frame.setTitle(title); 			
 		frame.setLocation(new Point(WINDOW_TOP_LEFT_X, WINDOW_TOP_LEFT_Y)); // top-left corner distance to the top-left corner of the screen/monitor
-		frame.setResizable(false);
 		frame.setFocusable(true);
-		frame.setSize(WIDTH, HEIGHT);
 		//frame.setUndecorated(true);
+		frame.setSize(WIDTH, HEIGHT);
+		frame.setResizable(false);
+		//frame.setExtendedState(Frame.MAXIMIZED_BOTH);
 		
 		//frame.setLayout(null);					//using no layout managers
 		
@@ -114,9 +115,11 @@ public class Window {
 		JFrame frame = new JFrame(); 				// creating instance of JFrame
 		frame.setTitle(title); 			
 		frame.setLocation(new Point(WINDOW_TOP_LEFT_X, WINDOW_TOP_LEFT_Y)); // top-left corner distance to the top-left corner of the screen/monitor
-		frame.setResizable(false);
+		//frame.setUndecorated(true);
 		frame.setFocusable(true);
 		frame.setSize(WIDTH, HEIGHT);
+		frame.setResizable(false);
+		//frame.setExtendedState(Frame.MAXIMIZED_BOTH);  // full screen mode
 		
 		//	frame.setLayout(null);					//using no layout managers
 		

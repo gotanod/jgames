@@ -52,7 +52,7 @@ public class V2f {
 		this.y = d;
 	}
 
-	public V2f(float x, float y, float z) {
+	public V2f(float x, float y) {
 		this.x = x;
 		this.y = y;
 	}
@@ -67,7 +67,7 @@ public class V2f {
 		this.y = (float) aValues[1];
 	}
 	
-	public V2f(double x, double y, double z) {
+	public V2f(double x, double y) {
 		this.x = (float) x;
 		this.y = (float) y;
 	}

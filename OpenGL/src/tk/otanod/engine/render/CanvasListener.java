@@ -22,9 +22,14 @@ SOFTWARE.
 
 public class CanvasListener implements GLEventListener {
 
-	List<GLEventListener> models;
-	public CanvasListener(List<GLEventListener> models) {
+	private List<GLEventListener> models;
+	private int width;
+	private int height;
+	
+	public CanvasListener(List<GLEventListener> models, int width, int height) {
 		this.models = models;
+		this.width = width;
+		this.height = height;
 	}
 	
 	@Override
@@ -44,6 +49,7 @@ public class CanvasListener implements GLEventListener {
 
 		// TODO: avoid limitation to 60FPS
 		gl.setSwapInterval(0); // MAX FPS, not limited to 60 FPS
+
 		/**
 		 * http://forum.jogamp.org/GLCanvas-Built-In-FPS-cap-td4028958.html
 		 * depending on the GL profile (> GL2) default it swap interval
@@ -105,7 +111,7 @@ public class CanvasListener implements GLEventListener {
 		// Cull reversed
 		//gl.glCullFace(GL4ES3.GL_FRONT); 	// removed the faces NOT looking to camera (to +Z (where the camera is))
 
-		gl.glLineWidth(10); 				// for TEST when using lines
+		//gl.glLineWidth(10); 				// for TEST when using lines
 
 		// String s = gl.glGetString(GL4ES3.GL_EXTENSIONS);
 		// if (s.contains("GL_IMG_texture_compression_pvrtc")){
@@ -125,9 +131,7 @@ public class CanvasListener implements GLEventListener {
 		// }
 
 		// Get current canvas dimensions
-		// Dimension myDimension = canvas.getSize();
-		// gl.glViewport(0, 0, myDimension.width, myDimension.height);
-		
+		gl.glViewport(6, 29, width-6, height-29);				// BUG: if you do not set up the view port, it uses full screen and it goes much slower!!!!
 		
 		System.out.println("init completed");
 	}
@@ -159,6 +163,8 @@ public class CanvasListener implements GLEventListener {
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
 		GL4ES3 gl = drawable.getGL().getGL4ES3();
+		this.width = width;
+		this.height = height;
 		gl.glViewport(x, y, width, height);
 		
 		System.out.println(String.format("Reshape => x: %d y: %d width: %d height: %d", x,y,width,height));
