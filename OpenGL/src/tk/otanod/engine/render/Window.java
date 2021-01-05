@@ -76,7 +76,10 @@ public class Window {
 		// GLProfile profile = GLProfile.get(GLProfile.GL2);				// OpenGL 2.0
 		
 		GLCapabilities capabilities = new GLCapabilities(profile);
-		capabilities.setDepthBits(24);					
+		capabilities.setDepthBits(24);
+		capabilities.setSampleBuffers(true);								// Together with gl.glEnable(GL4ES3.GL_MULTISAMPLE);
+		capabilities.setNumSamples(4);
+		//capabilities.setDoubleBuffered(true);
 
 		// Canvas
 		GLCanvas canvas = new GLCanvas(capabilities); 						// jogl

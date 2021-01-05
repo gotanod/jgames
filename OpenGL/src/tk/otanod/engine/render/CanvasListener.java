@@ -59,11 +59,16 @@ public class CanvasListener implements GLEventListener {
 
 		// Avoid aliasing squared borders
 		// https://learnopengl.com/Advanced-OpenGL/Anti-Aliasing
-		// gl.glEnable(GL4ES3.GL_MULTISAMPLE);
+		// Together with the capabilities when creating the canvas 
+		// capabilities.setSampleBuffers(true);  AND   capabilities.setNumSamples(4);
+		 gl.glEnable(GL4ES3.GL_MULTISAMPLE);
+
+		
+		gl.glEnable(GL4ES3.GL_FRAMEBUFFER_SRGB);					// Enable gamma correction when drawing to frame buffer/screen BUT what about MATERIALS!!! Materials values MUST be in RGB linear space
 
 		// Blend for transparency
-		gl.glEnable(GL4ES3.GL_BLEND);
-		gl.glBlendFunc(GL4ES3.GL_SRC_ALPHA, GL4ES3.GL_ONE_MINUS_SRC_ALPHA);
+//		gl.glEnable(GL4ES3.GL_BLEND);
+//		gl.glBlendFunc(GL4ES3.GL_SRC_ALPHA, GL4ES3.GL_ONE_MINUS_SRC_ALPHA);
 		// gl.glBlendFuncSeparate(GL4ES3.GL_SRC_ALPHA,
 		// GL4ES3.GL_ONE_MINUS_SRC_ALPHA, GL4ES3.GL_ONE,
 		// GL4ES3.GL_ZERO);
@@ -102,7 +107,7 @@ public class CanvasListener implements GLEventListener {
 		// gl.glClearDepthf(0f);
 
 		// Cull enabled, remove faces looking to -z (after all matrix movements)
-		gl.glEnable(GL4ES3.GL_CULL_FACE); 	// Blending can only show objects behid but not the internal object
+		gl.glEnable(GL4ES3.GL_CULL_FACE); 	// Blending can only show objects behind but not the internal object
 		gl.glFrontFace(GL4ES3.GL_CCW); 		// Counter Clockwise (right hand)
 		// Front face reversed
 		// gl.glFrontFace(GL4ES3.GL_CW); 	// Counter Clockwise (left hand)

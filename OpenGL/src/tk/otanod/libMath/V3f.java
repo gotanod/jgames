@@ -113,6 +113,10 @@ public class V3f {
 
 	public float z() { return(this.z);  }
 
+	public float[] getFloats() {
+		return(new float[] { this.x, this.y, this.z });
+	}
+	
 	/* ********************************
 	 * Setters 
 	 * ********************************/

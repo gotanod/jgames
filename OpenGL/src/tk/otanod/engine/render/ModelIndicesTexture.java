@@ -95,16 +95,7 @@ public class ModelIndicesTexture implements GLEventListener {
 		
 		this.indices = new int[] { 0, 1, 2, 2, 1, 3 };
 		this.nElements = indices.length;
-		
-//		// Create color data
-//		this.colors = new float[] {							
-//				1.0f, 0.0f, 0.0f, 1.0f,		// bottom-left
-//				0.0f, 1.0f, 0.0f, 1.0f,		// bottom-right
-//				0.0f, 0.0f, 1.0f, 1.0f,		// top-left
-//				0.4f, 0.4f, 0.1f, 1.0f,		// top-right
-//
-//		};   
-		
+				
 		// Create texture data
 		this.textureCoords = new float[] {		
 				0.0f, 0.0f,		// bottom-left
@@ -121,6 +112,7 @@ public class ModelIndicesTexture implements GLEventListener {
 	private int nTextures;
 	private int[] textureIDs;
 	private int programGLSL;
+	private int[] textureUnits;
 	
 	private void initialize(GLAutoDrawable drawable) {
 		// 1. Get context
@@ -158,16 +150,21 @@ public class ModelIndicesTexture implements GLEventListener {
 		gl.glGenTextures(this.nTextures, this.textureIDs, 0);
 		
 		RawImage tex;
-		
-		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + 0);  				// activate the texture unit first before binding texture
+		this.textureUnits = new int[this.nTextures];
+		for(int i=0;i<this.nTextures;i++) {
+			this.textureUnits[i] = TextureUnitManager.getInstance().getTextureNumber();
+		}
+		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + this.textureUnits[0]);  				// activate the texture unit first before binding texture
 		tex = ImageFile.loadFlippedImageFile("res/drawable/exodia_part1.jpg");
+//		tex = ImageFile.loadFlippedImageFile("res/drawable/wood_texture.png");
 		createTextureBitmapRGBA(gl, this.textureIDs[0], tex);
 		
-		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + 4);  				// activate the texture unit first before binding texture
+		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + this.textureUnits[1]);  				// activate the texture unit first before binding texture
 		tex = ImageFile.loadFlippedImageFile("res/drawable/blank.png");
+//		tex = ImageFile.loadFlippedImageFile("res/drawable/wood_texture.png");
 		createTextureBitmapRGBA(gl, this.textureIDs[1], tex);
 		
-		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + 15);				// activate the texture unit first before binding texture
+		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + this.textureUnits[2]);				// activate the texture unit first before binding texture
 		tex = ImageFile.loadFlippedImageFile("res/drawable/wood_texture.png");
 		createTextureBitmapRGBA(gl, this.textureIDs[2], tex);
 		
@@ -265,6 +262,7 @@ public class ModelIndicesTexture implements GLEventListener {
 		return(fbData);
 	}
 
+	boolean isTranslucent= false;
 	private void draw(GLAutoDrawable drawable) {
 		// 1. Get context
 		GL4ES3 gl = drawable.getGL().getGL4ES3();
@@ -275,13 +273,21 @@ public class ModelIndicesTexture implements GLEventListener {
 		// 4: Update the Uniforms
 		long seconds = System.currentTimeMillis() / 3000;
 		if ( seconds % 3 == 0 ) {
-			gl.glUniform1i(this.aAttribLocation[ATTRIB_SAMPLER], 0);			// 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, ..., 15 for GL_TEXTURE15
+			gl.glUniform1i(this.aAttribLocation[ATTRIB_SAMPLER], this.textureUnits[0]);			// 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, ..., 15 for GL_TEXTURE15
+			isTranslucent = false;
 		} 
 		if ( seconds % 3 == 1 ) {
-			gl.glUniform1i(this.aAttribLocation[ATTRIB_SAMPLER], 4);			// 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, ..., 15 for GL_TEXTURE15
+			gl.glUniform1i(this.aAttribLocation[ATTRIB_SAMPLER], this.textureUnits[1]);			// 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, ..., 15 for GL_TEXTURE15
+			isTranslucent = true;
 		}
 		if ( seconds % 3 == 2 ) {
-			gl.glUniform1i(this.aAttribLocation[ATTRIB_SAMPLER], 15);			// 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, ..., 15 for GL_TEXTURE15
+			gl.glUniform1i(this.aAttribLocation[ATTRIB_SAMPLER], this.textureUnits[2]);			// 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, ..., 15 for GL_TEXTURE15
+			isTranslucent = false;
+		}
+
+		if ( isTranslucent ) {
+			gl.glEnable(GL4ES3.GL_BLEND);
+			gl.glBlendFunc(GL4ES3.GL_SRC_ALPHA, GL4ES3.GL_ONE_MINUS_SRC_ALPHA);
 		}
 		
 		// 5: draw the VAOs
@@ -292,6 +298,11 @@ public class ModelIndicesTexture implements GLEventListener {
 		// Leave the ELEMENT_ARRAY_BUFFER bound inside the VAO, just avoid the unbind after creating it. And you don't need to call it here if it is already bound!!!
 		// gl.glBindBuffer(GL4ES3.GL_ELEMENT_ARRAY_BUFFER, this.vbos[0]);						
 		gl.glDrawElements(GL4ES3.GL_TRIANGLES, this.nElements, GL4ES3.GL_UNSIGNED_INT, 0); 	// DrawElements triangles, count, type,  OFFSET
+		
+		// Material
+		if ( isTranslucent ) {		
+			gl.glDisable(GL4ES3.GL_BLEND);
+		}
 		
 		// 6: Unbind
 		gl.glBindVertexArray(0); 					// Unbind our Vertex Array Object or bind to default VAO
@@ -358,7 +369,12 @@ public class ModelIndicesTexture implements GLEventListener {
 				+ "void main (void) { \n" 
 //				+ "   gl_FragColor = vColor; \n"
 //				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, 1.0 - vTextureCoord.t)).abgr; \n" // If the image is upside down, flip the T coordinate, use this line instead of next one
-				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)).abgr; \n"		// Image with ABGR format, loaded by GL as RGBA (default order) so we need to swizzle the components  // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_swizzle.txt
+//				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)).abgr; \n"		// Image with ABGR format, loaded by GL as RGBA (default order) so we need to swizzle the components  // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_swizzle.txt
+				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"		
+				
+				//    Gamma correction
+//				+ "   float gamma = 2.2; \n"
+//				+ "   gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1.0/gamma)); \n"				
 				+ "} ";
 						
 		if(gl.isGL3core()){
@@ -485,8 +501,8 @@ public class ModelIndicesTexture implements GLEventListener {
         gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
         //gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);
         // Scale up if the texture if smaller.      // scale linearly when image smaller than texture
-        //gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER, GL4ES3.GL_LINEAR);
-        //gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER, GL4ES3.GL_LINEAR);
+//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER, GL4ES3.GL_LINEAR);
+//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER, GL4ES3.GL_LINEAR);
         // Use mipmaps
         gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER,   GL4ES3.GL_LINEAR_MIPMAP_LINEAR); // GL4ES3.GL_NEAREST_MIPMAP_NEAREST);  //
 //        gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER,   GL4ES3.GL_NEAREST_MIPMAP_NEAREST);  //
@@ -500,8 +516,8 @@ public class ModelIndicesTexture implements GLEventListener {
         gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_REPEAT);
         
        	//System.out.println(">> TEXTURE 4 channels");
-       	//GL2ES2.texImage2D(GL2ES2.GL_TEXTURE_2D, 0, GL2ES2.GL_RGBA, GL2ES2.GL_RGBA, GL2ES2.GL_UNSIGNED_BYTE, bitmap);  
-       	gl.glTexImage2D(GL4ES3.GL_TEXTURE_2D, 0, GL4ES3.GL_RGBA, tex.width, tex.height, 0, GL4ES3.GL_RGBA, GL4ES3.GL_UNSIGNED_BYTE, tex.byteDataBuffer);       	       	      	       	
+//        gl.glTexImage2D(GL4ES3.GL_TEXTURE_2D, 0, GL4ES3.GL_RGBA, tex.width, tex.height, 0, GL4ES3.GL_RGBA, GL4ES3.GL_UNSIGNED_BYTE, tex.byteDataBuffer);       	       	      	       	
+		gl.glTexImage2D(GL4ES3.GL_TEXTURE_2D, 0, GL4ES3.GL_SRGB_ALPHA, tex.width, tex.height, 0, GL4ES3.GL_RGBA, GL4ES3.GL_UNSIGNED_BYTE, tex.byteDataBuffer);  // GL_SRGB_ALPHA transform image from gamma space to linear space, remeber to add gamma correction at the end of the Fragment Shader       	       	      	       	
 
        	// Generate MIPMAPs
         gl.glGenerateMipmap(GL4ES3.GL_TEXTURE_2D);

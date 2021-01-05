@@ -140,7 +140,7 @@ public class ModelMVPIndicesTextureOBJ implements GLEventListener {
 		gl.glGenTextures(this.nTextures, this.textureIDs, 0);
 		
 		RawImage tex;
-		textureUnit = 9;
+		textureUnit = TextureUnitManager.getInstance().getTextureNumber();
 		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + textureUnit);  				// activate the texture unit first before binding texture
 		tex = ImageFile.loadFlippedImageFile("res/models/stallTexture.png");
 		createTextureBitmapRGBA(gl, this.textureIDs[0], tex);
@@ -369,7 +369,8 @@ public class ModelMVPIndicesTextureOBJ implements GLEventListener {
 				+ "void main (void) { \n" 
 //				+ "   gl_FragColor = vColor; \n"
 //				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, 1.0 - vTextureCoord.t)).abgr; \n"
-				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)).abgr; \n"		// Image with ABGR format, loaded by GL as RGBA (default order) so we need to swizzle the components  // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_swizzle.txt
+//				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)).abgr; \n"		// Image with ABGR format, loaded by GL as RGBA (default order) so we need to swizzle the components  // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_swizzle.txt
+				+ "   gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"		
 				+ "} ";
 						
 		if(gl.isGL3core()){
@@ -513,7 +514,8 @@ public class ModelMVPIndicesTextureOBJ implements GLEventListener {
         
        	//System.out.println(">> TEXTURE 4 channels");
        	//GL2ES2.texImage2D(GL2ES2.GL_TEXTURE_2D, 0, GL2ES2.GL_RGBA, GL2ES2.GL_RGBA, GL2ES2.GL_UNSIGNED_BYTE, bitmap);  
-       	gl.glTexImage2D(GL4ES3.GL_TEXTURE_2D, 0, GL4ES3.GL_RGBA, tex.width, tex.height, 0, GL4ES3.GL_RGBA, GL4ES3.GL_UNSIGNED_BYTE, tex.byteDataBuffer);       	       	      	       	
+//       	gl.glTexImage2D(GL4ES3.GL_TEXTURE_2D, 0, GL4ES3.GL_RGBA, tex.width, tex.height, 0, GL4ES3.GL_RGBA, GL4ES3.GL_UNSIGNED_BYTE, tex.byteDataBuffer);       	       	      	       	
+       	gl.glTexImage2D(GL4ES3.GL_TEXTURE_2D, 0, GL4ES3.GL_SRGB_ALPHA, tex.width, tex.height, 0, GL4ES3.GL_RGBA, GL4ES3.GL_UNSIGNED_BYTE, tex.byteDataBuffer);       	       	      	       	
 
        	// Generate MIPMAPs
         gl.glGenerateMipmap(GL4ES3.GL_TEXTURE_2D);

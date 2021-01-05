@@ -22,8 +22,10 @@ import com.jogamp.opengl.GLEventListener;
 import tk.otanod.engine.render.ModelArray;
 import tk.otanod.engine.render.ModelIndices;
 import tk.otanod.engine.render.ModelIndicesTexture;
+import tk.otanod.engine.render.ModelMVPIndicesMaterialOBJLight;
 import tk.otanod.engine.render.ModelMVPIndicesTexture;
 import tk.otanod.engine.render.ModelMVPIndicesTextureOBJ;
+import tk.otanod.engine.render.ModelMVPIndicesTextureOBJLight;
 import tk.otanod.engine.render.Window;
 
 public class Main {
@@ -36,9 +38,9 @@ public class Main {
 //		// 3D model drawn with Arrays
 //		GLEventListener m1 = new ModelArray();
 //		models.add(m1);
-		// 3D model drawn with indices
-		GLEventListener m2 = new ModelIndices();
-		models.add(m2);
+//		// 3D model drawn with indices
+//		GLEventListener m2 = new ModelIndices();
+//		models.add(m2);
 		// 3D model drawn with indices and texture
 		GLEventListener m3 = new ModelIndicesTexture();
 		models.add(m3);
@@ -48,12 +50,16 @@ public class Main {
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
 		GLEventListener m5 = new ModelMVPIndicesTextureOBJ();
 		models.add(m5);
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		GLEventListener m6 = new ModelMVPIndicesTextureOBJLight();
+//		GLEventListener m6 = new ModelMVPIndicesMaterialOBJLight();
+		models.add(m6);
 		
 		// AWT - OpenGL window
 		Window w = new Window(models);
 
 		// Init the windows/openGL
-		w.createDisplay("DEMO 6");
+		w.createDisplay("DEMO 7 - Light");
 
 		// Display the window (loop)
 		//w.updateDisplay();
