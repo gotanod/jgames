@@ -23,6 +23,7 @@ import com.jogamp.opengl.GL4ES3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
+import tk.otanod.engine.camera.Camera;
 import tk.otanod.libIO.ImageFile;
 import tk.otanod.libIO.RawImage;
 import tk.otanod.libMath.M4f;

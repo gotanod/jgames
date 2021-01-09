@@ -18,14 +18,41 @@ import java.nio.ByteBuffer;
 
 public class RawImage {
 
+	public String name;
 	public int width;
 	public int height;
 	public ByteBuffer byteDataBuffer;
+	public boolean isTransparent = false;
 				
-	public RawImage(int width, int height, ByteBuffer byteBufferedFile) {
+	public RawImage(String imageName, int width, int height, ByteBuffer byteBufferedFile) {
+		this.name = imageName;
 		this.width = width;
 		this.height = height;
 		this.byteDataBuffer = byteBufferedFile;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+
+	public ByteBuffer getByteDataBuffer() {
+		return byteDataBuffer;
+	}
+
+	public boolean isTransparent() {
+		return isTransparent;
+	}
+
+	public void setTransparent(boolean isTransparent) {
+		this.isTransparent = isTransparent;
 	}
 
 }
