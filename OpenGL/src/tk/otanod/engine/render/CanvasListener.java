@@ -22,11 +22,11 @@ SOFTWARE.
 
 public class CanvasListener implements GLEventListener {
 
-	private List<GLEventListener> models;
+	private List<Model> models;
 	private int width;
 	private int height;
 	
-	public CanvasListener(List<GLEventListener> models, int width, int height) {
+	public CanvasListener(List<Model> models, int width, int height) {
 		this.models = models;
 		this.width = width;
 		this.height = height;
@@ -157,7 +157,7 @@ public class CanvasListener implements GLEventListener {
 		gl.glClear(GL4ES3.GL_COLOR_BUFFER_BIT | GL4ES3.GL_DEPTH_BUFFER_BIT);
 
 		// 3. Draw all models
-		for( GLEventListener model: models ) {
+		for( Model model: models ) {
 			model.display(drawable);
 		}
 		

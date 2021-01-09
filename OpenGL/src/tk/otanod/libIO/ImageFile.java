@@ -101,7 +101,7 @@ public final class ImageFile {
 			System.err.println("IOException while reading ImageFile: " + e.getMessage());
 		}
 
-		RawImage rawImg = new RawImage(width, height, byteBufferedFile);
+		RawImage rawImg = new RawImage(file, width, height, byteBufferedFile);
 		
 		return(rawImg);
 	}

@@ -23,6 +23,9 @@ import com.jogamp.opengl.GL4ES3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
+import tk.otanod.engine.camera.Camera;
+import tk.otanod.engine.light.Light;
+import tk.otanod.engine.light.Material;
 import tk.otanod.libIO.ImageFile;
 import tk.otanod.libIO.RawImage;
 import tk.otanod.libMath.M4f;
@@ -281,7 +284,7 @@ public class ModelMVPIndicesTextureOBJLight implements GLEventListener {
 	private long switchInterval = 5000l; 	// 5 seconds
 	private int prevMaterialID = (int) ((System.currentTimeMillis()/switchInterval) % Material.TYPE.values().length);;
 	private Material material = new Material(Material.TYPE.values()[prevMaterialID]);
-	boolean isTranslucent= false;
+	boolean isTranslucent= material.isTranslucent();
 	
 	private void draw(GLAutoDrawable drawable) {
 		// 1. Get context
@@ -334,7 +337,7 @@ public class ModelMVPIndicesTextureOBJLight implements GLEventListener {
 			gl.glDisable(GL4ES3.GL_CULL_FACE);	
 			gl.glEnable(GL4ES3.GL_BLEND);
 			gl.glBlendFunc(GL4ES3.GL_SRC_ALPHA, GL4ES3.GL_ONE_MINUS_SRC_ALPHA);
-			//gl.glBlendFuncSeparate(GL4ES3.GL_SRC_ALPHA, GL4ES3.GL_ONE_MINUS_SRC_ALPHA, GL4ES3.GL_SRC_ALPHA, GL4ES3.GL_ZERO);
+			//gl.glBlendFuncSeparate(GL4ES3.GL_SRC_ALPHA, GL4ES3.GL_ONE_MINUS_SRC_ALPHA, GL4ES3.GL_SRC_ALPHA, GL4ES3.GL_ONE_MINUS_SRC_ALPHA);
 		}
 		
 		gl.glUniform4fv(this.aAttribLocation[ATTRIB_MATERIAL_AMBIENT],  1, material.getAmbientConstantLinearRGB(),   0);
@@ -402,11 +405,9 @@ public class ModelMVPIndicesTextureOBJLight implements GLEventListener {
 				+ "attribute  vec4  av4Position; \n" 		// the vertex shader
 				+ "attribute  vec2  av2TextureCoord; \n"	// Texture coords
 				+ "attribute  vec3  av3Normal; \n"
-//				+ "uniform    vec3  uLightPosition; \n"
 				
 				+ "varying    vec2  vTextureCoord; \n"
 				+ "varying    vec3  vWorldNormal; \n"
-//				+ "varying    vec3  vUnitToLight; \n"
 				+ "varying    vec4  vv4WorldPosition; \n"
 				
 				+ "void main(void) {\n" 
@@ -415,7 +416,6 @@ public class ModelMVPIndicesTextureOBJLight implements GLEventListener {
 				+ "  vv4WorldPosition = uMmatrix * av4Position; \n"								// Vertex World position
 				+ "  gl_Position = uPVmatrix * vv4WorldPosition; \n"							// Vertex position in Projection/View/World
 				 
-//				+ "  vUnitToLight = normalize(uLightPosition - vv4WorldPosition.xyz); \n"			// unit vector from vertex to light 
 				+ "  vWorldNormal = normalize((uMmatrix * vec4(av3Normal, 0.0)).xyz); \n"		// Normal vector in the world (from model to world) w=0.0 to ignore translations, normalize to ignore scales, only rotations affect the normal vector
 				+ "} ";
 
@@ -435,7 +435,6 @@ public class ModelMVPIndicesTextureOBJLight implements GLEventListener {
 				+ "varying   vec2  vTextureCoord; \n" 
 	            + "uniform   sampler2D uSampler; \n"											// it will receive 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, 2 for GL_TEXTURE2, ... GL_TEXTURE15
 				+ "varying   vec3  vWorldNormal; \n"
-//				+ "varying   vec3  vUnitToLight; \n"
 				+ "varying   vec4  vv4WorldPosition; \n"
 				
 				+ "uniform struct Light {\n"
@@ -465,17 +464,27 @@ public class ModelMVPIndicesTextureOBJLight implements GLEventListener {
 				+ "   vec3 localUnitToLight = normalize(uLight.position - vv4WorldPosition.xyz); \n"
 				//    diffuse
 				+ "   float diffuseCoefficient = dot(fragmentWorldNormal, localUnitToLight); \n"							// angle between Light and Normal
-//				+ "   float diffuseCoefficient = dot(fragmentWorldNormal, vUnitToLight); \n"							// angle between Light and Normal
-				+ "   diffuseCoefficient = clamp(diffuseCoefficient, 0.0, 1.0); \n"								// clamp to range [0,1]. clamp returns the value of x constrained to the range minVal to maxVal. The returned value is computed as min(max(x, minVal), maxVal). 
+//				+ "   bool isBack = false; \n"
+//				+ "   if ( diffuseCoefficient < 0.0 ) { isBack = true; } \n"
+//				+ "   if ( uMaterial.diffuseConstant.a < 1.0 && isBack ) { \n"
+//				+ "       diffuseCoefficient = dot(-fragmentWorldNormal, localUnitToLight); \n"
+//				+ "   } \n"
+				+ "   diffuseCoefficient = clamp(diffuseCoefficient, 0.0, 1.0); \n"											// clamp to range [0,1]. clamp returns the value of x constrained to the range minVal to maxVal. The returned value is computed as min(max(x, minVal), maxVal).
 				+ "   vec4 diffuse = uMaterial.diffuseConstant * diffuseCoefficient * vec4(uLight.diffuseColor, 1.0); \n"									
 			    
 				//    specular
 				+ "   float specularCoefficient = 0.0; \n"
-				+ "   if ( diffuseCoefficient > 0.0 ) { \n"												// no need to calculate specular light if he surface is not looking to the light source
-				+ "       vec3 reflected = reflect(-localUnitToLight, fragmentWorldNormal); \n"					// Incident, Normal    ORDER is important!!!!!
-//				+ "       vec3 reflected = reflect(-vUnitToLight, fragmentWorldNormal); \n"						// Incident, Normal    ORDER is important!!!!!
-				+ "       vec3 vUnitToEye = normalize(uEyePosition - vv4WorldPosition.xyz); \n"
-				+ "       specularCoefficient = dot(reflected, vUnitToEye); \n"
+				+ "   if ( diffuseCoefficient > 0.0 ) { \n"																	// no need to calculate specular light if he surface is not looking to the light source
+//				+ "       if ( uMaterial.specularConstant.a < 1.0 && isBack ) { \n"				
+//				+ "           vec3 reflected = reflect(-localUnitToLight, -fragmentWorldNormal); \n"								// Incident, Normal    ORDER is important!!!!!
+//				+ "           vec3 vUnitToEye = normalize(uEyePosition - vv4WorldPosition.xyz); \n"
+//				+ "           specularCoefficient = dot(reflected, vUnitToEye); \n"
+//				+ "           specularCoefficient = abs(specularCoefficient); \n"
+//				+ "       } else { \n"				
+				+ "           vec3 reflected = reflect(-localUnitToLight, fragmentWorldNormal); \n"								// Incident, Normal    ORDER is important!!!!!
+				+ "           vec3 vUnitToEye = normalize(uEyePosition - vv4WorldPosition.xyz); \n"
+				+ "           specularCoefficient = dot(reflected, vUnitToEye); \n"
+//				+ "       }  \n"				
 				+ "       specularCoefficient = clamp(specularCoefficient, 0.0, 1.0); \n"
 				+ "   } else { \n"
 				+ "       discard; \n"
@@ -494,11 +503,10 @@ public class ModelMVPIndicesTextureOBJLight implements GLEventListener {
 				
 				//    Final color
 				+ "   gl_FragColor =  ( ambient + attenuation * (diffuse + specular) ) * texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"		// Image with RGBA color format				
-//				+ "   gl_FragColor =  ( ambient + attenuation * (diffuse + specular) ); \n"					// Only material, without texture		
 				
-				//    Gamma correction
-//				+ "   float gamma = 2.2; \n"
-//				+ "   gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1.0/gamma)); \n"				
+				//    Gamma correction			// done by GL gl.glEnable(GL4ES3.GL_FRAMEBUFFER_SRGB);
+				// + "   float gamma = 2.2; \n"										
+				// + "   gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1.0/gamma)); \n"				
 				+ "} ";
 						
 		if(gl.isGL3core()){
