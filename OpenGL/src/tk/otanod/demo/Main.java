@@ -22,8 +22,6 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-import com.jogamp.opengl.GLEventListener;
-
 import tk.otanod.engine.awt.MouseListeners;
 import tk.otanod.engine.awt.Pointer;
 import tk.otanod.engine.awt.Pointer.State;
@@ -32,13 +30,13 @@ import tk.otanod.engine.awt.WindowListeners;
 import tk.otanod.engine.camera.Camera;
 import tk.otanod.engine.light.Light;
 import tk.otanod.engine.render.Model;
-import tk.otanod.engine.render.ModelMVPIndicesMaterialOBJLight;
 import tk.otanod.engine.render.RenderGeneric;
-import tk.otanod.engine.render.RenderTerrain;
+import tk.otanod.engine.render.RenderTerrainMultitexture;
 import tk.otanod.engine.terrain.RawTerrain;
 import tk.otanod.engine.terrain.TerrainFlat;
 import tk.otanod.libIO.ImageFile;
 import tk.otanod.libIO.RawImage;
+import tk.otanod.libIO.RawImagePack;
 import tk.otanod.libMath.M4f;
 import tk.otanod.libMath.V3f;
 import tk.otanod.libOBJ.OBJLoader;
@@ -60,6 +58,8 @@ public class Main {
 		System.out.println("Main thread : " + Thread.currentThread().getName());
 		
 		List<Model> models = new ArrayList<>();
+		
+//		List<GLEventListener> models = new ArrayList<>();
 		// 3D model drawn with Arrays
 //		GLEventListener m1 = new ModelArray();
 //		models.add(m1);
@@ -87,10 +87,10 @@ public class Main {
 		 *  Light
 		 *********************/
 		Light light = new Light(
-				new V3f(256.0f, 256.0f, 256.0f),
-				new V3f(0.4f, 0.4f, 0.4f),
-				new V3f(1.0f, 1.0f, 1.0f),
-				new V3f(1.0f, 1.0f, 1.0f)
+				new V3f(256.0f, 256.0f, 256.0f),			// light position
+				new V3f(0.4f, 0.4f, 0.4f),					// ambient light
+				new V3f(1.0f, 1.0f, 1.0f),					// diffuse light
+				new V3f(1.0f, 1.0f, 1.0f)					// specular light
 				);
 
 		/*********************
@@ -98,8 +98,8 @@ public class Main {
 		 *********************/
 		Camera camera = new Camera(
 				new V3f(0.0f, 1.0f, 0.0f), 				// +Y axis is up in our world
-				new V3f(0.0f, 0.0f, -20.0f),			// default: we look to -Z axis, Change to the center of the object (our textured cube)
-				new V3f(0.0f, 2.0f, 0.0f)				// default: camera at (0,0,0)
+				new V3f(0.0f, 0.0f, -20.0f),			// default: we look to -Z axis, Change to the center of the scene
+				new V3f(0.0f, 4.0f, 0.0f)				// default: camera at (0,0,0)
 				);
 		
 		/*********************
@@ -112,10 +112,26 @@ public class Main {
 		
 		
 		// 3D Flat terrain
-		RawTerrain terrain = TerrainFlat.getInstance().create();
-		RawImage textureImageGround = ImageFile.loadFlippedImageFile("res/drawable/grass.png");
-		Model t1 = new RenderTerrain(new V3f(-400f, 0f, -400f), new V3f(1f,1f,1f), terrain, textureImageGround, camera, light, m4Projection);
-		models.add(t1);
+//		float width = 512.0f;
+//		int slices = 128;
+//		RawTerrain terrain = TerrainFlat.getInstance().create(width, slices);				// width, slices
+//		RawImage textureImageGround = ImageFile.loadFlippedImageFile("res/drawable/grass.png");
+//		Model t1 = new RenderTerrain(new V3f(-width/2.0f, 0f, -width/2.0f), new V3f(1f,1f,1f), terrain, textureImageGround, camera, light, m4Projection);
+//		models.add(t1);
+		
+		// 3D Flat terrain Multitexture
+		float width = 512.0f;
+		int slices = 128;
+		RawTerrain terrain = TerrainFlat.getInstance().create(width, slices);				// width, slices
+		RawImagePack textureImageGroundPack = new RawImagePack(new String[] {
+				"res/drawable/grassy2.png",
+				"res/drawable/mud.png",
+				"res/drawable/grassFlowers.png",
+				"res/drawable/path.png",
+				"res/drawable/blendMap.png"
+		});
+		Model t2 = new RenderTerrainMultitexture(new V3f(-width/2.0f, 0f, -width/2.0f), new V3f(1f,1f,1f), terrain, textureImageGroundPack, camera, light, m4Projection);
+		models.add(t2);
 		
 		
 //		// 3D model loaded from OBJ file drawn with indices and texture and MVP
@@ -130,8 +146,8 @@ public class Main {
 		RawOBJ tree = OBJLoader.load("res/models/tree.obj");
 		RawImage textureImageTree = ImageFile.loadFlippedImageFile("res/drawable/tree.png");
 		for (int i=0; i<50; i++) {
-			float x = (random.nextFloat() * 40.0f ) - 10.0f;
-			float z = (random.nextFloat() * 40.0f ) - 20.0f;
+			float x = (random.nextFloat() * 60.0f ) - 10.0f;
+			float z = (random.nextFloat() * 60.0f ) - 30.0f;
 			float scale = 0.7f + (random.nextFloat() * 1.0f);
 			Model aux = new RenderGeneric(new V3f(x, 0f, z), new V3f(scale, scale, scale), tree, textureImageTree, camera, light, m4Projection);
 			models.add(aux);
@@ -141,8 +157,8 @@ public class Main {
 		RawOBJ tree2 = OBJLoader.load("res/models/lowPolyTree.obj");
 		RawImage textureImageTree2 = ImageFile.loadFlippedImageFile("res/drawable/lowPolyTree.png");
 		for (int i=0; i<50; i++) {
-			float x = (random.nextFloat() * 40.0f ) - 30.0f;
-			float z = (random.nextFloat() * 40.0f ) - 20.0f;
+			float x = (random.nextFloat() * 60.0f ) - 50.0f;
+			float z = (random.nextFloat() * 60.0f ) - 30.0f;
 			float scale = 2.0f + (random.nextFloat() * 1f);
 			Model aux = new RenderGeneric(new V3f(x, 0f, z), new V3f(scale, scale, scale), tree2, textureImageTree2, camera, light, m4Projection);
 			models.add(aux);
@@ -173,7 +189,7 @@ public class Main {
 		// AWT - OpenGL window
 		Window w = new Window(WIDTH, HEIGHT, models);
 		// Init the windows/openGL
-		w.createDisplay("DEMO 8 - Flat terrain");
+		w.createDisplay("DEMO 9 - Flat terrain Multitexture");
 		// Attach the listeners
 		WindowListeners listener1 = new WindowListeners();
 		w.attachListener(listener1);

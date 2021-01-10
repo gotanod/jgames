@@ -33,10 +33,11 @@ public class TerrainFlat {
 	 * FLAT TERRAIN
 	 ************************/
 	
-	private static final float SIZE = 800;
-	private static final int SLICES = 128;
 	
-	public RawTerrain create(){
+	public RawTerrain create(float width, int slices){
+		final float WIDTH = width;
+		final int SLICES = slices;
+		
 		int count = SLICES * SLICES;
 		
 		float[] vertices = new float[count * 3];
@@ -63,9 +64,9 @@ public class TerrainFlat {
 		for(int i=0;i<SLICES;i++){
 			for(int j=0;j<SLICES;j++){
 				// VERTEX coordinates
-				vertices[vertexPointer*3] = (float)j/((float)SLICES - 1) * SIZE;
+				vertices[vertexPointer*3] = (float)j/((float)SLICES - 1) * WIDTH;
 				vertices[vertexPointer*3+1] = 0;
-				vertices[vertexPointer*3+2] = (float)i/((float)SLICES - 1) * SIZE;
+				vertices[vertexPointer*3+2] = (float)i/((float)SLICES - 1) * WIDTH;
 				// Flat terrain in XZ plane with normal (0,1,0)   Y axis is UP
 				normals[vertexPointer*3] = 0;				
 				normals[vertexPointer*3+1] = 1;		

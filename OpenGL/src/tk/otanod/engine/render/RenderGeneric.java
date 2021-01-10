@@ -461,13 +461,13 @@ public class RenderGeneric implements Model {
 				+ "   if(!gl_FrontFacing) { fragmentWorldNormal = -fragmentWorldNormal; } \n"						// TRICK while we implement BILLBOARDING for grass
 				
 				//    ambient
-				+ "   vec4 ambient = vec4(uLight.ambientColor, 1.0); \n"
+				+ "   vec3 ambient = uLight.ambientColor; \n"
 				
 				+ "   vec3 localUnitToLight = normalize(uLight.position - vv4WorldPosition.xyz); \n"
 				//    diffuse
 				+ "   float diffuseCoefficient = dot(fragmentWorldNormal, localUnitToLight); \n"					// angle between Light and Normal
 				+ "   diffuseCoefficient = clamp(diffuseCoefficient, 0.0, 1.0); \n"									// clamp to range [0,1]. clamp returns the value of x constrained to the range minVal to maxVal. The returned value is computed as min(max(x, minVal), maxVal).
-				+ "   vec4 diffuse = diffuseCoefficient * vec4(uLight.diffuseColor, 1.0); \n"									
+				+ "   vec3 diffuse = diffuseCoefficient * uLight.diffuseColor; \n"									
 			    
 				//    specular
 				+ "   float specularCoefficient = 0.0; \n"
@@ -477,7 +477,7 @@ public class RenderGeneric implements Model {
 				+ "       specularCoefficient = dot(reflected, vUnitToEye); \n"
 				+ "       specularCoefficient = clamp(specularCoefficient, 0.0, 1.0); \n"
 				+ "   } \n"
-				+ "   vec4 specular = pow(specularCoefficient, 1.0) * vec4(uLight.specularColor, 1.0); \n"			// shininessConstant = 1.0
+				+ "   vec3 specular = pow(specularCoefficient, 1.0) * uLight.specularColor; \n"			// shininessConstant = 1.0
 				
 				//    Final color
 				+ "   vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"			// Image with RGBA color format
@@ -488,7 +488,7 @@ public class RenderGeneric implements Model {
 //				+ "       gl_FragDepth = gl_FragCoord.z; \n"														// https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL
 //				+ "   } \n"
 				
-				+ "   gl_FragColor =  ( ambient + (diffuse + specular) ) * textureColor; \n"										
+				+ "   gl_FragColor =  vec4( ambient+diffuse+specular, 1.0 ) * textureColor; \n"										
 				
 				//    Gamma correction			// done by GL gl.glEnable(GL4ES3.GL_FRAMEBUFFER_SRGB);
 				// + "   float gamma = 2.2; \n"										

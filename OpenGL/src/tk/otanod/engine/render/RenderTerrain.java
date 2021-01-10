@@ -339,7 +339,7 @@ public class RenderTerrain implements Model {
 		gl.glUniform1i(this.aAttribLocation[ATTRIB_SAMPLER], textureUnit);			// 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, ..., 15 for GL_TEXTURE15
 		
 		// 4.2 PVM matrix			
-		M4f M = new M4f().scale(1.0f, 1.0f, 1.0f).setTranslate(this.xWorld, this.yWorld, this.zWorld);
+		M4f M = new M4f().scale(this.xScale, this.yScale, this.zScale).setTranslate(this.xWorld, this.yWorld, this.zWorld);
 		M4f PV = m4View.clone().preMultiply(m4Projection);
 		
 		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_PV], 1, false, PV.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
@@ -451,13 +451,13 @@ public class RenderTerrain implements Model {
 				+ "   vec3 fragmentWorldNormal = normalize(vWorldNormal); \n"
 				
 				//    ambient
-				+ "   vec4 ambient = vec4(uLight.ambientColor, 1.0); \n"
+				+ "   vec3 ambient = uLight.ambientColor; \n"
 				
 				+ "   vec3 localUnitToLight = normalize(uLight.position - vv4WorldPosition.xyz); \n"
 				//    diffuse
 				+ "   float diffuseCoefficient = dot(fragmentWorldNormal, localUnitToLight); \n"							// angle between Light and Normal
 				+ "   diffuseCoefficient = clamp(diffuseCoefficient, 0.0, 1.0); \n"											// clamp to range [0,1]. clamp returns the value of x constrained to the range minVal to maxVal. The returned value is computed as min(max(x, minVal), maxVal).
-				+ "   vec4 diffuse = diffuseCoefficient * vec4(uLight.diffuseColor, 1.0); \n"									
+				+ "   vec3 diffuse = diffuseCoefficient * uLight.diffuseColor; \n"									
 			    
 				//    specular
 				+ "   float specularCoefficient = 0.0; \n"
@@ -467,10 +467,10 @@ public class RenderTerrain implements Model {
 				+ "       specularCoefficient = dot(reflected, vUnitToEye); \n"
 				+ "       specularCoefficient = clamp(specularCoefficient, 0.0, 1.0); \n"
 				+ "   } \n"
-				+ "   vec4 specular = pow(specularCoefficient, 1.0) * vec4(uLight.specularColor, 1.0); \n"			// shininessConstant = 1.0
+				+ "   vec3 specular = pow(specularCoefficient, 1.0) * uLight.specularColor; \n"			// shininessConstant = 1.0
 				
 				//    Final color
-				+ "   gl_FragColor =  ( ambient + (diffuse + specular) ) * texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"		// Image with RGBA color format				
+				+ "   gl_FragColor =  vec4( ambient+(diffuse+specular), 1.0 ) * texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"		// Image with RGBA color format				
 //				+ "   gl_FragColor =  texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"		// Image with RGBA color format				
 //				+ "   gl_FragColor =  vec4(1.0, 0.0, 0.3, 1.0); \n"		// Image with RGBA color format				
 				
@@ -608,23 +608,31 @@ public class RenderTerrain implements Model {
 	}	
 
 	public void createTextureBitmapRGBA(GL4ES3 gl, int textureID, RawImage tex) {
-    	    	
-        gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
-        //gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);
-        // Scale up if the texture if smaller.      // scale linearly when image smaller than texture
-        //gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER, GL4ES3.GL_LINEAR);
-        //gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER, GL4ES3.GL_LINEAR);
-        // Use mipmaps
-        gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER,   GL4ES3.GL_LINEAR_MIPMAP_LINEAR); // GL4ES3.GL_NEAREST_MIPMAP_NEAREST);  //
-//        gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER,   GL4ES3.GL_NEAREST_MIPMAP_NEAREST);  //
-        gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER,  GL4ES3.GL_LINEAR_MIPMAP_LINEAR); // GL4ES3.GL_NEAREST_MIPMAP_NEAREST);  //
-//        gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER,  GL4ES3.GL_NEAREST_MIPMAP_NEAREST);  //
-        
-        // what to do if not enough image
-//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_CLAMP_TO_EDGE);
-//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_CLAMP_TO_EDGE);
-        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_REPEAT);
-        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_REPEAT);
+    	
+		gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
+		//gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);
+		
+		// Scale up/down if the texture if smaller.      
+		// GL_NEAREST - no filtering, no mipmaps
+		// GL_LINEAR - filtering, no mipmaps
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER, GL4ES3.GL_LINEAR);		// scale linearly when image smaller than texture
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER, GL4ES3.GL_LINEAR);
+		
+		// Use mipmaps. Scale up/down if the texture if smaller.
+		// GL_NEAREST_MIPMAP_NEAREST - no filtering, sharp switching between mipmaps
+		// GL_NEAREST_MIPMAP_LINEAR - no filtering, smooth transition between mipmaps
+		// GL_LINEAR_MIPMAP_NEAREST - filtering, sharp switching between mipmaps
+		// GL_LINEAR_MIPMAP_LINEAR - filtering, smooth transition between mipmaps
+		gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER,   GL4ES3.GL_LINEAR);	// Magnifier only supports GL_LINEAR or GL_NEAREST
+		gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER,  GL4ES3.GL_LINEAR_MIPMAP_LINEAR);	// down
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAX_LOD, 1000.0f);
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_LOD, -1000.0f);
+		
+		// what to do if not enough image
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
+		gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
+		gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
         
        	//System.out.println(">> TEXTURE 4 channels");
        	//GL2ES2.texImage2D(GL2ES2.GL_TEXTURE_2D, 0, GL2ES2.GL_RGBA, GL2ES2.GL_RGBA, GL2ES2.GL_UNSIGNED_BYTE, bitmap);  
@@ -632,7 +640,6 @@ public class RenderTerrain implements Model {
 
        	// Generate MIPMAPs
         gl.glGenerateMipmap(GL4ES3.GL_TEXTURE_2D);
-        //System.out.println("MIPMAP done");	
 
         //Sets the object texture to the new created texture
        	//gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, 0);
