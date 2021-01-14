@@ -23,6 +23,8 @@ public class Light {
 	private V3f diffuseColor;
 	private V3f specularColor;
 	
+	private V3f skyColor = new V3f(0.5f, 0.5f, 0.95f);
+	
 	public Light(V3f position, V3f ambientColor, V3f diffuseColor, V3f specularColor) {
 		this.position = position;
 		this.ambientColor = ambientColor;
@@ -44,6 +46,10 @@ public class Light {
 
 	public float[] getSpecularColor() {
 		return specularColor.getFloats();
+	}
+
+	public float[] getSkyColor() {
+		return skyColor.getFloats();
 	}
 	
 	

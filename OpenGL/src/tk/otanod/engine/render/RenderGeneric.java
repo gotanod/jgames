@@ -47,10 +47,11 @@ public class RenderGeneric implements Model {
 	
 	// Projection matrix
 	private M4f m4Projection;
-	
 	// View Matrix
 	private V3f v3Eye;
 	private M4f m4View;
+	// World matrix
+	private M4f m4World;
 	
 	// Texture
 	RawImage textureImage;
@@ -73,18 +74,21 @@ public class RenderGeneric implements Model {
 	private int programGLSL;
 	
 	// GLSL
-    private int[] aAttribLocation = new int[11];
+    private int[] aAttribLocation = new int[13];
 	private static final int ATTRIB_POSITION = 0;
 	private static final int ATTRIB_TEXTURE_COORDS = 1;
 	private static final int ATTRIB_NORMAL = 2;
 	private static final int ATTRIB_SAMPLER = 3;
-	private static final int ATTRIB_PV = 4;
-	private static final int ATTRIB_M = 5;
-	private static final int ATTRIB_LIGHT_POSITION = 6;
-	private static final int ATTRIB_LIGHT_AMBIENT_COLOR = 7;
-	private static final int ATTRIB_LIGHT_DIFFUSE_COLOR = 8;
-	private static final int ATTRIB_LIGHT_SPECULAR_COLOR = 9;
-	private static final int ATTRIB_EYE_POSITION = 10;
+	private static final int ATTRIB_P = 4;
+	private static final int ATTRIB_V = 5;
+	private static final int ATTRIB_M = 6;
+	private static final int ATTRIB_LIGHT_POSITION = 7;
+	private static final int ATTRIB_LIGHT_AMBIENT_COLOR = 8;
+	private static final int ATTRIB_LIGHT_DIFFUSE_COLOR = 9;
+	private static final int ATTRIB_LIGHT_SPECULAR_COLOR = 10;
+	private static final int ATTRIB_EYE_POSITION = 11;
+	private static final int ATTRIB_SKYCOLOR = 12;
+
 	
 	public RenderGeneric(V3f position, V3f scale, RawOBJ model, RawImage textureImage, Camera camera, Light light, M4f projection) {
 		
@@ -129,6 +133,8 @@ public class RenderGeneric implements Model {
 		this.xWorld = x;
 		this.yWorld = y;
 		this.zWorld = z;
+		
+		this.m4World = new M4f().scale(this.xScale, this.yScale, this.zScale).setTranslate(this.xWorld, this.yWorld, this.zWorld);
 	}
 
 	@Override
@@ -136,7 +142,9 @@ public class RenderGeneric implements Model {
 		// World scale
 		this.xScale = xScale;
 		this.yScale = yScale;
-		this.zScale = zScale;		
+		this.zScale = zScale;
+		
+		this.m4World = new M4f().scale(this.xScale, this.yScale, this.zScale).setTranslate(this.xWorld, this.yWorld, this.zWorld);		
 	}
 	
 	@Override
@@ -335,18 +343,17 @@ public class RenderGeneric implements Model {
 		// gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);							// you can avoid this call, if you don't reuse the Texture Unit between model
 		gl.glUniform1i(this.aAttribLocation[ATTRIB_SAMPLER], textureUnit);			// 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, ..., 15 for GL_TEXTURE15
 		
-		// 4.2 PVM matrix			
-		M4f M = new M4f().scale(this.xScale, this.yScale, this.zScale).setTranslate(this.xWorld, this.yWorld, this.zWorld);
-		M4f PV = m4View.clone().preMultiply(m4Projection);
-		
-		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_PV], 1, false, PV.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
-		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_M], 1, false, M.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
+		// 4.2 PVM matrix					
+		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_P], 1, false, m4Projection.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
+		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_V], 1, false, m4View.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
+		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_M], 1, false, m4World.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
 		
 		// 4.3 Light uniforms
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_LIGHT_POSITION],       1, light.getPosition(),      0);
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_LIGHT_AMBIENT_COLOR],  1, light.getAmbientColor(),  0);
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_LIGHT_DIFFUSE_COLOR],  1, light.getDiffuseColor(),  0);
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_LIGHT_SPECULAR_COLOR], 1, light.getSpecularColor(), 0);
+		gl.glUniform3fv(this.aAttribLocation[ATTRIB_SKYCOLOR], 1, light.getSkyColor(), 0);	
 		
 		// 4.5 Camera/Eye position
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_EYE_POSITION],  1, v3Eye.getFloats(),   0);
@@ -405,7 +412,8 @@ public class RenderGeneric implements Model {
 				+ "  precision mediump int; \n" 			// GLSL ES section 4.5.2
 				+ "#endif \n" 
 				
-				+ "uniform 	  mat4  uPVmatrix; \n"			// PV matrix, column major, pre-multiplied, from world to view and projection space
+				+ "uniform 	  mat4  uPmatrix; \n"			// PV matrix, column major, pre-multiplied, from world to view and projection space
+				+ "uniform 	  mat4  uVmatrix; \n"			// PV matrix, column major, pre-multiplied, from world to view and projection space
 				+ "uniform    mat4  uMmatrix; \n"			// Model matrix, from model to world
 				+ "attribute  vec4  av4Position; \n" 		// the vertex shader
 				+ "attribute  vec2  av2TextureCoord; \n"	// Texture coords
@@ -414,14 +422,22 @@ public class RenderGeneric implements Model {
 				+ "varying    vec2  vTextureCoord; \n"
 				+ "varying    vec3  vWorldNormal; \n"
 				+ "varying    vec4  vv4WorldPosition; \n"
+				+ "varying    float fogVisibility; \n"				
+				+ "const   	  float fogDensity = 0.01; \n"				
+				+ "const      float fogGradient = 1.5; \n"					
 				
 				+ "void main(void) {\n" 
 				+ "  vTextureCoord = av2TextureCoord; \n"										// Pass-through
 				
 				+ "  vv4WorldPosition = uMmatrix * av4Position; \n"								// Vertex World position
-				+ "  gl_Position = uPVmatrix * vv4WorldPosition; \n"							// Vertex position in Projection/View/World
+				+ "  vec4 v4ViewPosition = uVmatrix * vv4WorldPosition; \n"								// Vertex World position				
+				+ "  gl_Position = uPmatrix * v4ViewPosition; \n"							// Vertex position in Projection/View/World
 				 
 				+ "  vWorldNormal = normalize((uMmatrix * vec4(av3Normal, 0.0)).xyz); \n"		// Normal vector in the world (from model to world) w=0.0 to ignore translations, normalize to ignore scales, only rotations affect the normal vector
+				
+				+ "  float distanceToCamera = length(v4ViewPosition.xyz); \n"
+				+ "  fogVisibility = exp(-pow(distanceToCamera*fogDensity, fogGradient)); \n"
+				
 				+ "} ";
 
 		String sFragmentShaderCode =
@@ -441,7 +457,10 @@ public class RenderGeneric implements Model {
 	            + "uniform   sampler2D uSampler; \n"											// it will receive 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, 2 for GL_TEXTURE2, ... GL_TEXTURE15
 				+ "varying   vec3  vWorldNormal; \n"
 				+ "varying   vec4  vv4WorldPosition; \n"
-				+ "varying   float gl_FragDepth; \n"
+//				+ "varying   float gl_FragDepth; \n"
+
+				+ "varying   float   fogVisibility; \n"				
+				+ "uniform	 vec3    uSkyColor; \n"
 				
 				+ "uniform struct Light {\n"
 				+ "   vec3  position; \n"				
@@ -488,7 +507,8 @@ public class RenderGeneric implements Model {
 //				+ "       gl_FragDepth = gl_FragCoord.z; \n"														// https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL
 //				+ "   } \n"
 				
-				+ "   gl_FragColor =  vec4( ambient+diffuse+specular, 1.0 ) * textureColor; \n"										
+				+ "   vec4 finalColor =  vec4( ambient+diffuse+specular, 1.0 ) * textureColor; \n"
+				+ "   gl_FragColor =  mix(vec4(uSkyColor,1.0), finalColor, fogVisibility); \n"					
 				
 				//    Gamma correction			// done by GL gl.glEnable(GL4ES3.GL_FRAMEBUFFER_SRGB);
 				// + "   float gamma = 2.2; \n"										
@@ -600,14 +620,15 @@ public class RenderGeneric implements Model {
         this.aAttribLocation[ATTRIB_TEXTURE_COORDS] = gl.glGetAttribLocation(mShaderProgram, "av2TextureCoord");        
         this.aAttribLocation[ATTRIB_NORMAL] 		= gl.glGetAttribLocation(mShaderProgram, "av3Normal");        
         this.aAttribLocation[ATTRIB_SAMPLER]	    = gl.glGetUniformLocation(mShaderProgram, "uSampler");      
-        this.aAttribLocation[ATTRIB_PV]				= gl.glGetUniformLocation(mShaderProgram, "uPVmatrix");  
+        this.aAttribLocation[ATTRIB_P]				= gl.glGetUniformLocation(mShaderProgram, "uPmatrix");  
+        this.aAttribLocation[ATTRIB_V]				= gl.glGetUniformLocation(mShaderProgram, "uVmatrix");  
         this.aAttribLocation[ATTRIB_M]				= gl.glGetUniformLocation(mShaderProgram, "uMmatrix");
         this.aAttribLocation[ATTRIB_LIGHT_POSITION]			= gl.glGetUniformLocation(mShaderProgram, "uLight.position");
         this.aAttribLocation[ATTRIB_LIGHT_AMBIENT_COLOR]	= gl.glGetUniformLocation(mShaderProgram, "uLight.ambientColor");
         this.aAttribLocation[ATTRIB_LIGHT_DIFFUSE_COLOR]	= gl.glGetUniformLocation(mShaderProgram, "uLight.diffuseColor");
         this.aAttribLocation[ATTRIB_LIGHT_SPECULAR_COLOR]	= gl.glGetUniformLocation(mShaderProgram, "uLight.specularColor");
         this.aAttribLocation[ATTRIB_EYE_POSITION]  	= gl.glGetUniformLocation(mShaderProgram, "uEyePosition");
-
+        this.aAttribLocation[ATTRIB_SKYCOLOR]  		= gl.glGetUniformLocation(mShaderProgram, "uSkyColor");
         
         // STEP 8: Detach and delete the shaders, they are no longer needed after the program is linked and compiled
         gl.glDetachShader(mShaderProgram, vertexShader);

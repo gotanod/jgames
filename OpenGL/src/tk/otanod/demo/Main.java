@@ -108,7 +108,7 @@ public class Main {
 		//M4f m4Projection = new M4f(Camera.getOrthoProjectionMatrix(2.0f, 2.0f, 0.1f, 10.0f));
 		//M4f m4Projection = new M4f(Camera.getInfiniteProjectionMatrix(1.0f, -1.0f, 1.0f, -1.0f, 1.0f));
 		//M4f m4Projection = new M4f(Camera.getProjectionMatrix(1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 100.0f));
-		M4f m4Projection = new M4f(Camera.getProjectionMatrix(FOV, WIDTH/HEIGHT, 1.0f, 100.0f));
+		M4f m4Projection = new M4f(Camera.getProjectionMatrix(FOV, WIDTH/HEIGHT, 1.0f, 150.0f));
 		
 		
 		// 3D Flat terrain
@@ -189,7 +189,7 @@ public class Main {
 		// AWT - OpenGL window
 		Window w = new Window(WIDTH, HEIGHT, models);
 		// Init the windows/openGL
-		w.createDisplay("DEMO 9 - Flat terrain Multitexture");
+		w.createDisplay("DEMO 10 - Fog");
 		// Attach the listeners
 		WindowListeners listener1 = new WindowListeners();
 		w.attachListener(listener1);
