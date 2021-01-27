@@ -36,7 +36,15 @@ import javax.imageio.ImageIO;
 
 public final class ImageFile {
 
+	public static RawImage loadImageFile(String file) {
+		return loadImageFile(file, false);
+	}
+	
 	public static RawImage loadFlippedImageFile(String file) {
+		return loadImageFile(file, true);
+	}
+	
+	public static RawImage loadImageFile(String file, boolean isFlipped) {
 
 		BufferedImage mBufferedImage = null;
 		ByteBuffer byteBufferedFile = null;
@@ -51,7 +59,12 @@ public final class ImageFile {
 
 			mBufferedImage = ImageIO.read(mFile);
 			
-			mBufferedImage = createFlipped(mBufferedImage);											// this avoids the tricks inside the GLSL fragment shader!!!!!!!!!
+			if ( isFlipped == true ) {
+				mBufferedImage = createFlipped(mBufferedImage);											// this avoids the tricks inside the GLSL fragment shader!!!!!!!!!
+			} else {				
+				mBufferedImage = createTransformed(mBufferedImage);											// this avoids the tricks inside the GLSL fragment shader!!!!!!!!!
+			}
+			
 						
 			// Returns the image type. If it is not one of the known types, TYPE_CUSTOM is returned.
 			// Returns:the image type of this BufferedImage.
@@ -106,9 +119,21 @@ public final class ImageFile {
 		return(rawImg);
 	}
 	
+	private static BufferedImage createTransformed(BufferedImage image)   {
+		// TYPE_CUSTOM (RGBA_pre) ==> we use RGBA as GL expects it, and you can load textures in linear space and correct gamma at the end of fragment shader (GL_SRGB_ALPHA) 
+		WritableRaster raster =  Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE,image.getWidth(), image.getHeight(), image.getWidth() * 4, 4, new int[] {0, 1, 2, 3}, null);
+		ColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8,8,8,8}, true, true, ColorModel.TRANSLUCENT, DataBuffer.TYPE_BYTE);
+		BufferedImage newImage = new BufferedImage(colorModel, raster, true, new Hashtable<>());	   
+		
+		Graphics2D g = newImage.createGraphics();
+		g.drawImage(image, 0, 0, null);
+		g.dispose();
+		return newImage;
+	}
+	
 	private static BufferedImage createTransformed(BufferedImage image, AffineTransform at)   {
 		// TYPE_4BYTE_ABGR_PRE => requires swizzling in the fragment shader  ().abgr
-//		BufferedImage newImage = new BufferedImage(image.getWidth(), image.getHeight(),BufferedImage.TYPE_4BYTE_ABGR_PRE);
+		//BufferedImage newImage = new BufferedImage(image.getWidth(), image.getHeight(),BufferedImage.TYPE_4BYTE_ABGR_PRE);
 		
 		// TYPE_CUSTOM (RGBA_pre) ==> we use RGBA as GL expects it, and you can load textures in linear space and correct gamma at the end of fragment shader (GL_SRGB_ALPHA) 
         WritableRaster raster =  Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE,image.getWidth(), image.getHeight(), image.getWidth() * 4, 4, new int[] {0, 1, 2, 3}, null);
@@ -121,7 +146,7 @@ public final class ImageFile {
 		g.dispose();
 		return newImage;
 	}
-	
+		
 	private static BufferedImage createFlipped(BufferedImage image)  {
 		AffineTransform at = new AffineTransform();
 		at.concatenate(AffineTransform.getScaleInstance(1, -1));
@@ -141,6 +166,60 @@ public final class ImageFile {
         g.dispose();
         return newImage;
     }  
+
+	public static RawImage subImage(RawImage image, String name, int rows, int cols, int index, boolean isFlippedHorizontal, boolean isFlippedVertical) {
+		// Image 
+		int imagePixelWidth = image.getWidth();
+		int imagePixelHeight = image.getHeight();
+		ByteBuffer bb = image.getByteDataBuffer();
+		bb.position(0);
+		int bytesPerPixel = bb.remaining() / (imagePixelWidth * imagePixelHeight);
+		
+		// SubImage
+		int subImagePixelWidth = imagePixelWidth / cols;
+		int subImagePixelHeight = imagePixelHeight / rows;
+		byte[] bytes = new byte[subImagePixelWidth * subImagePixelHeight * bytesPerPixel];
+		int subImageCol = index % cols;
+		int subImageRow = index / cols;
+		int imageRowStartPosition = subImageRow * subImagePixelHeight * imagePixelWidth * bytesPerPixel + subImageCol * subImagePixelWidth * bytesPerPixel;
+		int sign = 1;
+		if ( isFlippedVertical ) {
+			imageRowStartPosition += (subImagePixelHeight-1) * imagePixelWidth * bytesPerPixel;
+			sign = -1;			// decrement inside the loop
+		}
+		for (int i=0;i<subImagePixelHeight; i++) {
+			bb.position(imageRowStartPosition);
+			
+			int off = i * subImagePixelWidth * bytesPerPixel;
+			int len = subImagePixelWidth * bytesPerPixel;
+			
+			if ( isFlippedHorizontal ) {
+				// Horizontally flipped
+				for (int j = 0; j < len; j+=bytesPerPixel) {
+					// for each pixel, store the bytes in the original order (ex. RGBA, and do not reverse them to ABGR..)
+					for (int k=bytesPerPixel-1; k>=0; k--) {
+						bytes[off + len - j - 1 - k] = bb.get();			// store in reverse order				
+					}
+				}
+			} else { 
+				// not Horizontally Flipped
+				bb.get(bytes, off, len);
+			}
+			// Next row
+			imageRowStartPosition += sign * imagePixelWidth * bytesPerPixel;
+		}
+		
+		// Prepare the output ByteBuffer
+		ByteBuffer sbb = ByteBuffer.allocateDirect(bytes.length);
+		sbb.order(ByteOrder.nativeOrder());
+		sbb.put(bytes); 
+		sbb.position(0);
+		
+		// Prepare the output RawImage
+		RawImage subImage = new RawImage(name, subImagePixelWidth, subImagePixelHeight, sbb);
+		
+		return subImage;
+	}
 
 	private static void debug(String tag, String msg) {
 		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);

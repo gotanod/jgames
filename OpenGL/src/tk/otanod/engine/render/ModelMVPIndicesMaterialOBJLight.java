@@ -258,7 +258,8 @@ public class ModelMVPIndicesMaterialOBJLight implements GLEventListener {
 			new V3f(0.0f, 0.0f, 0.0f),
 			new V3f(0.5f, 0.5f, 0.5f),
 			new V3f(1.0f, 1.0f, 1.0f),
-			new V3f(1.0f, 1.0f, 1.0f)
+			new V3f(1.0f, 1.0f, 1.0f),
+			new V3f(90f/255f,120f/255f,144f/255f)
 			);
 	
 	// Material

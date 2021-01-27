@@ -31,6 +31,7 @@ import tk.otanod.engine.camera.Camera;
 import tk.otanod.engine.light.Light;
 import tk.otanod.engine.render.Model;
 import tk.otanod.engine.render.RenderGeneric;
+import tk.otanod.engine.render.RenderSkyBox;
 import tk.otanod.engine.render.RenderTerrainMultitexture;
 import tk.otanod.engine.terrain.RawTerrain;
 import tk.otanod.engine.terrain.TerrainFlat;
@@ -52,6 +53,7 @@ public class Main {
 	private static final double PITCH_SENSIBILITY = 100d / (double) HEIGHT;		// Higher values move the camera faster
 	private static final double YAW_SENSIBILITY = 100d / (double) WIDTH;		// Higher values move the camera faster
 	private static final float ZOOM_SENSIBILITY = 0.05f;						// Higher values move the camera faster
+	private static final float UP_SENSIBILITY = 0.05f;							// Higher values move the camera faster
 
 	public static void main(String args[]) {
 		
@@ -90,7 +92,8 @@ public class Main {
 				new V3f(256.0f, 256.0f, 256.0f),			// light position
 				new V3f(0.4f, 0.4f, 0.4f),					// ambient light
 				new V3f(1.0f, 1.0f, 1.0f),					// diffuse light
-				new V3f(1.0f, 1.0f, 1.0f)					// specular light
+				new V3f(1.0f, 1.0f, 1.0f),					// specular light
+				new V3f(90f/255f,120f/255f,144f/255f)		// skyColor / fogColor
 				);
 
 		/*********************
@@ -99,16 +102,16 @@ public class Main {
 		Camera camera = new Camera(
 				new V3f(0.0f, 1.0f, 0.0f), 				// +Y axis is up in our world
 				new V3f(0.0f, 0.0f, -20.0f),			// default: we look to -Z axis, Change to the center of the scene
-				new V3f(0.0f, 4.0f, 0.0f)				// default: camera at (0,0,0)
+				new V3f(0.0f, 3.0f, 0.0f)				// default: camera at (0,0,0)
 				);
-		
+
 		/*********************
 		 *  PVM matrices
 		 *********************/
 		//M4f m4Projection = new M4f(Camera.getOrthoProjectionMatrix(2.0f, 2.0f, 0.1f, 10.0f));
 		//M4f m4Projection = new M4f(Camera.getInfiniteProjectionMatrix(1.0f, -1.0f, 1.0f, -1.0f, 1.0f));
 		//M4f m4Projection = new M4f(Camera.getProjectionMatrix(1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 100.0f));
-		M4f m4Projection = new M4f(Camera.getProjectionMatrix(FOV, WIDTH/HEIGHT, 1.0f, 150.0f));
+		M4f m4Projection = new M4f(Camera.getProjectionMatrix(FOV, WIDTH/HEIGHT, 1.0f, 150.0f));			// 150 farZPlane ==> fogDensity = 0.02
 		
 		
 		// 3D Flat terrain
@@ -129,7 +132,7 @@ public class Main {
 				"res/drawable/grassFlowers.png",
 				"res/drawable/path.png",
 				"res/drawable/blendMap.png"
-		});
+		}, true);
 		Model t2 = new RenderTerrainMultitexture(new V3f(-width/2.0f, 0f, -width/2.0f), new V3f(1f,1f,1f), terrain, textureImageGroundPack, camera, light, m4Projection);
 		models.add(t2);
 		
@@ -157,10 +160,22 @@ public class Main {
 		RawOBJ tree2 = OBJLoader.load("res/models/lowPolyTree.obj");
 		RawImage textureImageTree2 = ImageFile.loadFlippedImageFile("res/drawable/lowPolyTree.png");
 		for (int i=0; i<50; i++) {
-			float x = (random.nextFloat() * 60.0f ) - 50.0f;
+			float x = (random.nextFloat() * 60.0f ) - 60.0f;
 			float z = (random.nextFloat() * 60.0f ) - 30.0f;
 			float scale = 2.0f + (random.nextFloat() * 1f);
 			Model aux = new RenderGeneric(new V3f(x, 0f, z), new V3f(scale, scale, scale), tree2, textureImageTree2, camera, light, m4Projection);
+			models.add(aux);
+		}
+		
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		RawOBJ tree3 = OBJLoader.load("res/models/pine.obj");
+		RawImage textureImageTree3 = ImageFile.loadFlippedImageFile("res/drawable/pine.png");
+		for (int i=0; i<50; i++) {
+			float x = (random.nextFloat() * 60.0f ) - 0.0f;
+			float z = (random.nextFloat() * 80.0f ) - 20.0f;
+			float scaleY = 2.0f + (random.nextFloat() * 1f);
+			float scaleXZ = scaleY - 1.0f;
+			Model aux = new RenderGeneric(new V3f(x, 0f, z), new V3f(scaleXZ, scaleY, scaleXZ), tree3, textureImageTree3, camera, light, m4Projection);
 			models.add(aux);
 		}
 		
@@ -186,10 +201,27 @@ public class Main {
 			models.add(aux);
 		}
 		
+		// SkyBox
+		RawOBJ cube = RawOBJ.buildSkyBox();
+		// Skybox with individual images
+//		RawImagePack textureSkyBox = new RawImagePack(new String[] {
+//				"res/drawable/skybox4/right.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_X 	Right
+//				"res/drawable/skybox4/left.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_X 	Left
+//				"res/drawable/skybox4/top.png",			// GL_TEXTURE_CUBE_MAP_POSITIVE_Y 	Top
+//				"res/drawable/skybox4/bottom.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Y 	Bottom
+//				"res/drawable/skybox4/back.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_Z 	Back
+//				"res/drawable/skybox4/front.png"		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 	Front
+//		}, false);
+		// Skybox with 1 image
+//		RawImagePack textureSkyBox = new RawImagePack("res/drawable/skyboxTEST.png", 4, 4);		
+		RawImagePack textureSkyBox = new RawImagePack("res/drawable/skyboxClouds.png", 4, 4);
+		Model aux = new RenderSkyBox(new V3f(0.0f, 0.0f, 0.0f), new V3f(1.0f,1.0f,1.0f), cube, textureSkyBox, camera, light, m4Projection);
+		models.add(aux);
+		
 		// AWT - OpenGL window
 		Window w = new Window(WIDTH, HEIGHT, models);
 		// Init the windows/openGL
-		w.createDisplay("DEMO 10 - Fog");
+		w.createDisplay("DEMO 11 - Skybox");
 		// Attach the listeners
 		WindowListeners listener1 = new WindowListeners();
 		w.attachListener(listener1);
@@ -204,6 +236,7 @@ public class Main {
 		Pointer pointer;
 		while ( true ) {			
 			while ( (pointer = pointersQueue.pollFirst() ) != null ) {
+				// Camera LookAt
 				if ( pointer.getPointerID() == 1 ) {
 					if ( pointer.getState() == State.DRAGGED ) {
 						double incPitchGrades = (pointer.getyOrig() - pointer.getY()) * PITCH_SENSIBILITY;
@@ -212,10 +245,23 @@ public class Main {
 						camera.setDeltaYaw(incYawGrades);
 					}
 				}
+				// Up Down
+				if ( pointer.getPointerID() == 3 ) {
+					if ( pointer.getState() == State.DRAGGED ) {
+						float incUpDown = (float) ((pointer.getyOrig() - pointer.getY()) * UP_SENSIBILITY);
+						camera.moveUpDown(incUpDown);
+					}
+				}
 			}
-			if ( pointersMap.containsKey(3) && pointersMap.get(3).isPressed() ) {
+			// Forward
+			if ( pointersMap.containsKey(1) && pointersMap.get(1).isPressed() ) {
 				camera.moveForward(ZOOM_SENSIBILITY);
+			}			
+			// Backwards
+			if ( pointersMap.containsKey(3) && pointersMap.get(3).isPressed() ) {
+				camera.moveForward(-ZOOM_SENSIBILITY);
 			}				
+			
 			
 			// 2. update the camera
 			for (Model model: models) {

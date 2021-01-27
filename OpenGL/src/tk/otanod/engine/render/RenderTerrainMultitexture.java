@@ -427,8 +427,9 @@ public class RenderTerrainMultitexture implements Model {
 				+ "varying    vec3  vWorldNormal; \n"
 				+ "varying    vec4  vv4WorldPosition; \n"
 				+ "varying    float fogVisibility; \n"				
-				+ "const   	  float fogDensity = 0.01; \n"				
-				+ "const      float fogGradient = 1.5; \n"				
+				// http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJlXigtKCgwLjAxNSp4KV4yLjUpKSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xODQuNzQxMTExMjk3NjI1NzQiLCIxODQuNzQxMTExMjk3NjI1NzQiLCItMS4yNDk5OTk5OTk5OTk5OTk4IiwiMS4yNDk5OTk5OTk5OTk5OTk4Il19XQ--
+				+ "const   	  float fogDensity = 0.015; \n"				// farZPlane in the Perspective matrix (0.028  for 100) (0.018 for 150) (0.01 for 330)				
+				+ "const      float fogGradient = 2.5; \n"	
 				
 				+ "void main(void) {\n" 
 				+ "  vTextureCoord = av2TextureCoord; \n"										// Pass-through

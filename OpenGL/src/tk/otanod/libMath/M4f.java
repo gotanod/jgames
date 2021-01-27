@@ -155,6 +155,21 @@ public class M4f {
         return(that);
     }
     
+    public float[] getM3Elements() {
+    	// FASTER THAN getFloats()
+    	float[] that = new float[9];
+    	that[0] = this.m[0];
+    	that[1] = this.m[1];
+    	that[2] = this.m[2];
+    	that[3] = this.m[4];
+    	that[4] = this.m[5];
+    	that[5] = this.m[6];
+    	that[6] = this.m[8];
+    	that[7] = this.m[9];
+    	that[8] = this.m[10];
+    	return(that);
+    }
+    
     /* **********************
      * Setters 
      * **********************/

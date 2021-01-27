@@ -22,20 +22,31 @@ public class Light {
 	private V3f ambientColor;
 	private V3f diffuseColor;
 	private V3f specularColor;
+	 
+	private V3f skyColor = new V3f(90f/255f,120f/255f,144f/255f);			// used as fogColor
+	private float fogUpperLimit = 0.2f;										// Skybox is a NDC cube  [-1,1]		
+	private float fogLowerLimit = 0.0f;										// Skybox is a NDC cube  [-1,1]
 	
-	private V3f skyColor = new V3f(0.5f, 0.5f, 0.95f);
-	
-	public Light(V3f position, V3f ambientColor, V3f diffuseColor, V3f specularColor) {
+	public Light(V3f position, V3f ambientColor, V3f diffuseColor, V3f specularColor, V3f skyColor) {
 		this.position = position;
 		this.ambientColor = ambientColor;
 		this.diffuseColor = diffuseColor;
 		this.specularColor = specularColor;
+		this.skyColor = skyColor;
 	}
 
+	/**********************************
+	 * Light position
+	 **********************************/
+	
 	public float[] getPosition() {
 		return position.getFloats();
 	}
 
+	/**********************************
+	 * Blinn–Phong reflection model
+	 **********************************/
+	
 	public float[] getAmbientColor() {
 		return ambientColor.getFloats();
 	}
@@ -52,5 +63,19 @@ public class Light {
 		return skyColor.getFloats();
 	}
 	
+	/*****************************
+	 * FOG
+	 *****************************/
+	public float[] getFogColor() {
+		return skyColor.getFloats();
+	}
+
+	public float getFogUpperLimit() {
+		return fogUpperLimit;
+	}
+
+	public float getFogLowerLimit() {
+		return fogLowerLimit;
+	}
 	
 }

@@ -100,7 +100,8 @@ public class CanvasListener implements GLEventListener {
 		// Depth Buffer enabled, depth buffer higher value for far
 		// objects
 		gl.glEnable(GL4ES3.GL_DEPTH_TEST);
-		gl.glDepthFunc(GL4ES3.GL_LESS); // GL_LEQUAL
+		gl.glDepthFunc(GL4ES3.GL_LESS); 
+		//gl.glDepthFunc(GL4ES3.GL_LEQUAL); 			// required for SkyBox trick pos.xyww, done inside draw function before drawing the skybox
 		gl.glClearDepthf(1f);
 		// Depth buffer reversed
 		// gl.glDepthFunc(GL4ES3.GL_GREATER);

@@ -65,7 +65,7 @@ public class Camera {
 			m4LookAtViewMatrix = new M4f(Camera.getViewMatrixLookAt(v3Eye, v3Center, v3Up));
 			m4LookAtViewMatrix.preMultiply(yawMatrix).preMultiply(pitchMatrix);
 	
-			if ( step > 0.0f ) {
+			if ( step != 0.0f ) {
 				V3f invForward = new V3f(m4LookAtViewMatrix.getElement(2),m4LookAtViewMatrix.getElement(6),m4LookAtViewMatrix.getElement(10)).scale(-1.0f).normalize();
 				V3f invForwardXZ = new V3f(invForward.x(), 0.0f, invForward.z()).normalize();
 				v3Eye.add(invForwardXZ.clone().scale(step));
@@ -108,6 +108,12 @@ public class Camera {
 		this.step -= step;
 	}
 	
+	public void moveUpDown(float step) {
+		this.isDelayedUpdateNeeded = true;
+		this.v3Eye.add(new V3f(0.0f, step, 0.0f));
+		this.v3Center.add(new V3f(0.0f, step, 0.0f));
+	}
+		
 	
 	/************************
 	 *	PROJECTION MATRICES

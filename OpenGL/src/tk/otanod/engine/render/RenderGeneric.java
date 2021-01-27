@@ -230,9 +230,8 @@ public class RenderGeneric implements Model {
 			this.nTextures = 1;
 			this.textureIDs = new int[this.nTextures];
 			gl.glGenTextures(this.nTextures, this.textureIDs, 0);
-			textureUnit = TextureUnitManager.getInstance().getTextureNumber(textureImage.getName());
-			gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + textureUnit);  										// activate the texture unit first before binding texture
-			createTextureBitmapRGBA(gl, this.textureIDs[0], textureImage);			
+			this.textureUnit = TextureUnitManager.getInstance().getTextureNumber(textureImage.getName());
+			createTexture(gl, this.textureIDs[0], this.textureUnit, textureImage);			
 		}		
 		        
 	}
@@ -422,9 +421,10 @@ public class RenderGeneric implements Model {
 				+ "varying    vec2  vTextureCoord; \n"
 				+ "varying    vec3  vWorldNormal; \n"
 				+ "varying    vec4  vv4WorldPosition; \n"
-				+ "varying    float fogVisibility; \n"				
-				+ "const   	  float fogDensity = 0.01; \n"				
-				+ "const      float fogGradient = 1.5; \n"					
+				+ "varying    float fogVisibility; \n"	
+				// http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJlXigtKCgwLjAxNSp4KV4yLjUpKSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xODQuNzQxMTExMjk3NjI1NzQiLCIxODQuNzQxMTExMjk3NjI1NzQiLCItMS4yNDk5OTk5OTk5OTk5OTk4IiwiMS4yNDk5OTk5OTk5OTk5OTk4Il19XQ--
+				+ "const   	  float fogDensity = 0.015; \n"				// farZPlane in the Perspective matrix (0.028  for 100) (0.018 for 150) (0.01 for 330)				
+				+ "const      float fogGradient = 2.5; \n"					
 				
 				+ "void main(void) {\n" 
 				+ "  vTextureCoord = av2TextureCoord; \n"										// Pass-through
@@ -644,8 +644,10 @@ public class RenderGeneric implements Model {
         return(mShaderProgram);
 	}	
 
-	public void createTextureBitmapRGBA(GL4ES3 gl, int textureID, RawImage tex) {
-    	    	
+	public void createTexture(GL4ES3 gl, int textureID, int textureUnit, RawImage tex) {
+
+		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + textureUnit);  										// activate the texture unit first before binding texture
+		
         gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
         //gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);
         

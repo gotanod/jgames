@@ -20,7 +20,7 @@ public class RawImagePack {
 	private RawImage[] rawImages;
 	private int size;
 
-	public RawImagePack(String[] imageNames) {
+	public RawImagePack(String[] imageNames, boolean isFlipped) {
 		this.nameImages = imageNames;
 
 		this.size = this.nameImages.length;
@@ -28,8 +28,26 @@ public class RawImagePack {
 		this.rawImages = new RawImage[this.size];
 		
 		for (int i=0; i<this.size; i++) {
-			this.rawImages[i] = ImageFile.loadFlippedImageFile(this.nameImages[i]);
+			this.rawImages[i] = ImageFile.loadImageFile(this.nameImages[i], isFlipped);
 		}
+	}
+	
+	public RawImagePack(String imagePackName, int rows, int cols) {
+		this.nameImages = new String[] { "right", "left", "top", "bottom", "back", "front" };
+		
+		this.size = this.nameImages.length;
+		
+		this.rawImages = new RawImage[this.size];
+
+		RawImage image = ImageFile.loadImageFile(imagePackName,  false);
+		
+		this.rawImages[0] = ImageFile.subImage(image, "right",  rows, cols, 6, true, false);	// GL_TEXTURE_CUBE_MAP_POSITIVE_X 	Right
+		this.rawImages[1] = ImageFile.subImage(image, "left",   rows, cols, 4, true, false);	// GL_TEXTURE_CUBE_MAP_NEGATIVE_X 	Left
+		this.rawImages[2] = ImageFile.subImage(image, "top",    rows, cols, 1, false, true);	// GL_TEXTURE_CUBE_MAP_POSITIVE_Y 	Top
+		this.rawImages[3] = ImageFile.subImage(image, "bottom", rows, cols, 9, false, true);	// GL_TEXTURE_CUBE_MAP_NEGATIVE_Y 	Bottom
+		this.rawImages[4] = ImageFile.subImage(image, "back",   rows, cols, 7, true, false);	// GL_TEXTURE_CUBE_MAP_POSITIVE_Z 	Back
+		this.rawImages[5] = ImageFile.subImage(image, "front", 	rows, cols, 5, true, false);	// GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 	Front
+		
 	}
 	
 	public int getSize() {
