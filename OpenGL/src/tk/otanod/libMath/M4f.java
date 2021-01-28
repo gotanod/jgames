@@ -235,10 +235,10 @@ public class M4f {
 
     @Override
     public String toString() {
-        return( "m0 " + this.m[0] + "\tm4 " + this.m[4] + "\tm08" +  this.m[8] + "\tm12" + this.m[12] + "\n" +
-                "m1 " + this.m[1] + "\tm5 " + this.m[5] + "\tm09" +  this.m[9] + "\tm13" + this.m[13] + "\n" +
-                "m2 " + this.m[2] + "\tm6 " + this.m[6] + "\tm10" + this.m[10] + "\tm14" + this.m[14] + "\n" +
-                "m3 " + this.m[3] + "\tm7 " + this.m[7] + "\tm11" + this.m[11] + "\tm15" + this.m[15] + "\n"
+        return( "m0 " + this.m[0] + "\tm4 " + this.m[4] + "\tm08 " +  this.m[8] + "\tm12 " + this.m[12] + "\n" +
+                "m1 " + this.m[1] + "\tm5 " + this.m[5] + "\tm09 " +  this.m[9] + "\tm13 " + this.m[13] + "\n" +
+                "m2 " + this.m[2] + "\tm6 " + this.m[6] + "\tm10 " + this.m[10] + "\tm14 " + this.m[14] + "\n" +
+                "m3 " + this.m[3] + "\tm7 " + this.m[7] + "\tm11 " + this.m[11] + "\tm15 " + this.m[15] + "\n"
                 );
     }
    

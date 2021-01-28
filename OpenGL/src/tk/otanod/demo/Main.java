@@ -31,6 +31,7 @@ import tk.otanod.engine.camera.Camera;
 import tk.otanod.engine.light.Light;
 import tk.otanod.engine.render.Model;
 import tk.otanod.engine.render.RenderGeneric;
+import tk.otanod.engine.render.RenderGenericInstance;
 import tk.otanod.engine.render.RenderSkyBox;
 import tk.otanod.engine.render.RenderTerrainMultitexture;
 import tk.otanod.engine.terrain.RawTerrain;
@@ -50,11 +51,13 @@ public class Main {
 	private static final int WIDTH = 1280;
 	private static final int HEIGHT = 720;
 	private static final float FOV = 60;										// vertical vision angle (60º)
-	private static final double PITCH_SENSIBILITY = 100d / (double) HEIGHT;		// Higher values move the camera faster
-	private static final double YAW_SENSIBILITY = 100d / (double) WIDTH;		// Higher values move the camera faster
+	private static final double PITCH_SENSIBILITY = 150d / (double) HEIGHT;		// Higher values move the camera faster
+	private static final double YAW_SENSIBILITY = 150d / (double) WIDTH;		// Higher values move the camera faster
 	private static final float ZOOM_SENSIBILITY = 0.05f;						// Higher values move the camera faster
 	private static final float UP_SENSIBILITY = 0.05f;							// Higher values move the camera faster
 
+	private static Random random = new Random();
+	
 	public static void main(String args[]) {
 		
 		System.out.println("Main thread : " + Thread.currentThread().getName());
@@ -137,91 +140,84 @@ public class Main {
 		models.add(t2);
 		
 		
-//		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
 //		RawOBJ dragon = OBJLoader.load("res/models/dragon.obj");
 //		RawImage textureImageDragon = ImageFile.loadFlippedImageFile("res/drawable/white.png");
-//		Model d = new RenderGeneric(new V3f(0f, 0f, -30f), new V3f(1f,1f,1f), dragon, textureImageDragon, camera, light, m4Projection);
+//		Model d = new RenderGeneric(new V3f(0f, 0f, -30f), new V3f(.2f,.2f,.2f), dragon, textureImageDragon, camera, light, m4Projection);
 //		models.add(d);
 
-		Random random = new Random();
 		
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
-		RawOBJ tree = OBJLoader.load("res/models/tree.obj");
-		RawImage textureImageTree = ImageFile.loadFlippedImageFile("res/drawable/tree.png");
-		for (int i=0; i<50; i++) {
-			float x = (random.nextFloat() * 60.0f ) - 10.0f;
-			float z = (random.nextFloat() * 60.0f ) - 30.0f;
-			float scale = 0.7f + (random.nextFloat() * 1.0f);
-			Model aux = new RenderGeneric(new V3f(x, 0f, z), new V3f(scale, scale, scale), tree, textureImageTree, camera, light, m4Projection);
-			models.add(aux);
-		}
+		RawOBJ tree1 = OBJLoader.load("res/models/tree.obj");
+		RawImage textureImageTree1 = ImageFile.loadFlippedImageFile("res/drawable/tree.png");
+		int instancesTree1 = 50;
+		float[] instancesModelMatrixTree1 = createInstancesModelArray(3.0f, 4.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesTree1);
+		Model tree1Model = new RenderGenericInstance(instancesTree1, instancesModelMatrixTree1, tree1, textureImageTree1, camera, light, m4Projection);
+		models.add(tree1Model);
 		
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
 		RawOBJ tree2 = OBJLoader.load("res/models/lowPolyTree.obj");
 		RawImage textureImageTree2 = ImageFile.loadFlippedImageFile("res/drawable/lowPolyTree.png");
-		for (int i=0; i<50; i++) {
-			float x = (random.nextFloat() * 60.0f ) - 60.0f;
-			float z = (random.nextFloat() * 60.0f ) - 30.0f;
-			float scale = 2.0f + (random.nextFloat() * 1f);
-			Model aux = new RenderGeneric(new V3f(x, 0f, z), new V3f(scale, scale, scale), tree2, textureImageTree2, camera, light, m4Projection);
-			models.add(aux);
-		}
+		int instancesTree2 = 50;
+		float[] instancesModelMatrixTree2 = createInstancesModelArray(5.0f, 6.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesTree2);
+		Model tree2Model = new RenderGenericInstance(instancesTree2, instancesModelMatrixTree2, tree2, textureImageTree2, camera, light, m4Projection);
+		models.add(tree2Model);
 		
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
-		RawOBJ tree3 = OBJLoader.load("res/models/pine.obj");
+		RawOBJ tree3 = OBJLoader.load("res/models/pine_sorted.obj");
 		RawImage textureImageTree3 = ImageFile.loadFlippedImageFile("res/drawable/pine.png");
-		for (int i=0; i<50; i++) {
-			float x = (random.nextFloat() * 60.0f ) - 0.0f;
-			float z = (random.nextFloat() * 80.0f ) - 20.0f;
-			float scaleY = 2.0f + (random.nextFloat() * 1f);
-			float scaleXZ = scaleY - 1.0f;
-			Model aux = new RenderGeneric(new V3f(x, 0f, z), new V3f(scaleXZ, scaleY, scaleXZ), tree3, textureImageTree3, camera, light, m4Projection);
-			models.add(aux);
-		}
+		textureImageTree3.setTransparent(true);
+		int instancesTree3 = 20;
+		float[] instancesModelMatrixTree3 = createInstancesModelArray(3.0f, 4.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesTree3);
+		Model tree3Model = new RenderGenericInstance(instancesTree3, instancesModelMatrixTree3, tree3, textureImageTree3, camera, light, m4Projection);
+		models.add(tree3Model);
 		
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
 		RawOBJ fern = OBJLoader.load("res/models/fern.obj");
 		RawImage textureImageFern = ImageFile.loadFlippedImageFile("res/drawable/fern.png");
 		textureImageFern.setTransparent(true);
-		for (int i=0; i<20; i++) {
-			float x = (random.nextFloat() * 60.0f ) - 30.0f;
-			float z = (random.nextFloat() * 60.0f ) - 30.0f;
-			Model aux = new RenderGeneric(new V3f(x, 0f, z), new V3f(.2f,.2f,.2f), fern, textureImageFern, camera, light, m4Projection);
-			models.add(aux);
-		}
+		int instancesFern = 20;
+		float[] instancesModelMatrixFern = createInstancesModelArray(1.0f, 2.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesFern);
+		Model fernModel = new RenderGenericInstance(instancesFern, instancesModelMatrixFern, fern, textureImageFern, camera, light, m4Projection);
+		models.add(fernModel);
+		
 		
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
-		RawOBJ grass = OBJLoader.load("res/models/grass.obj");
-		RawImage textureImageGrass = ImageFile.loadFlippedImageFile("res/drawable/grass5.png");
+		RawOBJ grass = OBJLoader.load("res/models/grassY.obj");
+		RawImage textureImageGrass = ImageFile.loadFlippedImageFile("res/drawable/grass1.png");
 		textureImageGrass.setTransparent(true);
-		for (int i=0; i<40; i++) {
-			float x = (random.nextFloat() * 60.0f ) - 30.0f;
-			float z = (random.nextFloat() * 60.0f ) - 30.0f;
-			Model aux = new RenderGeneric(new V3f(x, 0f, z), new V3f(0.3f,0.3f,0.3f), grass, textureImageGrass, camera, light, m4Projection);
-			models.add(aux);
-		}
+		int instancesGrass = 300;
+		float[] instancesModelMatrixGrass = createInstancesModelArray(0.5f, 1.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesGrass);
+		Model grassModel = new RenderGenericInstance(instancesGrass, instancesModelMatrixGrass, grass, textureImageGrass, camera, light, m4Projection);
+		models.add(grassModel);
+		
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		RawOBJ text = RawOBJ.buildQuad();
+		RawImage textureImageText = ImageFile.loadFlippedImageFile("res/fonts/arial.png");
+		textureImageText.setTransparent(true);
+		Model textModel = new RenderGenericInstance(1, (new M4f()).scale(3.0f, 3.0f, 3.0f).getElements(), text, textureImageText, camera, light, m4Projection);
+		models.add(textModel);
 		
 		// SkyBox
 		RawOBJ cube = RawOBJ.buildSkyBox();
 		// Skybox with individual images
-//		RawImagePack textureSkyBox = new RawImagePack(new String[] {
-//				"res/drawable/skybox4/right.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_X 	Right
-//				"res/drawable/skybox4/left.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_X 	Left
-//				"res/drawable/skybox4/top.png",			// GL_TEXTURE_CUBE_MAP_POSITIVE_Y 	Top
-//				"res/drawable/skybox4/bottom.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Y 	Bottom
-//				"res/drawable/skybox4/back.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_Z 	Back
-//				"res/drawable/skybox4/front.png"		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 	Front
-//		}, false);
-		// Skybox with 1 image
-//		RawImagePack textureSkyBox = new RawImagePack("res/drawable/skyboxTEST.png", 4, 4);		
-		RawImagePack textureSkyBox = new RawImagePack("res/drawable/skyboxClouds.png", 4, 4);
-		Model aux = new RenderSkyBox(new V3f(0.0f, 0.0f, 0.0f), new V3f(1.0f,1.0f,1.0f), cube, textureSkyBox, camera, light, m4Projection);
-		models.add(aux);
+		//		RawImagePack textureSkyBox = new RawImagePack(new String[] {
+		//				"res/drawable/skybox4/right.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_X 	Right
+		//				"res/drawable/skybox4/left.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_X 	Left
+		//				"res/drawable/skybox4/top.png",			// GL_TEXTURE_CUBE_MAP_POSITIVE_Y 	Top
+		//				"res/drawable/skybox4/bottom.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Y 	Bottom
+		//				"res/drawable/skybox4/back.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_Z 	Back
+		//				"res/drawable/skybox4/front.png"		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 	Front
+		//		}, false);
+		// Skybox with 1 image	
+		RawImagePack textureSkyBox = new RawImagePack("res/drawable/skyboxClouds.png", 4, 4);			// skyboxTEST.png
+		Model skyBoxModel = new RenderSkyBox(new V3f(0.0f, 0.0f, 0.0f), new V3f(1.0f,1.0f,1.0f), cube, textureSkyBox, camera, light, m4Projection);
+		models.add(skyBoxModel);
 		
 		// AWT - OpenGL window
 		Window w = new Window(WIDTH, HEIGHT, models);
 		// Init the windows/openGL
-		w.createDisplay("DEMO 11 - Skybox");
+		w.createDisplay("DEMO 12 - Instantiated draw");
 		// Attach the listeners
 		WindowListeners listener1 = new WindowListeners();
 		w.attachListener(listener1);
@@ -272,6 +268,25 @@ public class Main {
 			w.updateDisplay();
 		}
 			
+	}
+
+	private static float[] createInstancesModelArray(float minSize, float maxSize, float minX, float maxX, float minZ, float maxZ, int instances) {
+		
+		float[] instancesModelMatrix = new float[instances * 16];
+		
+		for (int i=0; i<instances; i++) {
+			float x = (random.nextFloat() * (maxX - minX) ) + minX;
+			float y = 0.0f;
+			float z = (random.nextFloat() * (maxZ - minZ) ) + minZ;
+
+			float scale = ( random.nextFloat() * (maxSize-minSize) ) + minSize;		
+			
+			float angle = (float) (random.nextFloat() * Math.PI);
+			
+			M4f m4 = new M4f().scale(scale, scale, scale).rotateYaxisCCW(angle).setTranslate(x, y, z);
+			System.arraycopy(m4.getElements(), 0, instancesModelMatrix, i*16, 16);		// arraycopy(Object src, int srcPos, Object dest, int destPos, int length)
+		}
+		return instancesModelMatrix;
 	}
 	
 }

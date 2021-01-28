@@ -86,6 +86,8 @@ public class RenderSkyBox implements Model {
 	private static final int ATTRIB_FOG_COLOR = 7;
 	private static final int ATTRIB_EYE_POSITION = 8;
 
+	private static final double ROTATION_SPEED = 0.00007;
+
 	
 	public RenderSkyBox(V3f position, V3f scale, RawOBJ model, RawImagePack textureSkyBoxPack, Camera camera, Light light, M4f projection) {
 		
@@ -354,7 +356,7 @@ public class RenderSkyBox implements Model {
 		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_P], 1, false, m4Projection.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
 		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_V], 1, false, m4View.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
 		
-		m4Model.rotateZaxisCW(0.0008);
+		m4Model.rotateZaxisCW(ROTATION_SPEED);
 		gl.glUniformMatrix3fv(this.aAttribLocation[ATTRIB_M], 1, false, m4Model.getM3Elements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
 		
 		// 4.3 Fog
@@ -464,7 +466,8 @@ public class RenderSkyBox implements Model {
 //				+ "const      float fogGradient = 2.5; \n"	
 //				+ "const      float maxTheta = 1.4; \n"	
             
-				+ "void main (void) { \n"		
+				+ "void main (void) { \n"	
+				
 				// Sky Box without Fog
 //				+ "   gl_FragColor =  texture(uSampler, vTextureCoord); \n"
 				
@@ -477,13 +480,21 @@ public class RenderSkyBox implements Model {
 				
 				// SkyBox with fog (method 2 gradient)
 				// http://www.fooplot.com/#W3sidHlwZSI6MCwiZXEiOiIxLWVeKC03Kih4LTAuMDM1KSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMS4xODEzODM3MTM5NDIzMDU4IiwiMS4zMTg2MTYyODYwNTc2OTEiLCItMS4zOTEyNzgwNzYxNzE4NzMzIiwiMS4xMDg3MjE5MjM4MjgxMjM2Il19XQ--
+//				+ "   vec4 color =  texture(uSampler, vTextureCoord); \n"
+//				+ "   float fogVisibility = 1.0 - exp(-7.0*(v3Position.y-0.12+uEyePosition.y/128.0)); \n"		// 0.035 = MAX_TREE_HIGH / 128.0              CAMERA.y = [-128, 128]
+//				+ "   fogVisibility = clamp(fogVisibility, 0.0, 1.0); \n"				
+//				+ "   gl_FragColor =  mix(vec4(uFogColor, 1.0), color, fogVisibility); \n"
+				
+				// SkyBox with fog (method 3 SIGMOID)
+				// http://www.fooplot.com/#W3sidHlwZSI6MCwiZXEiOiIxLygxK2VeKC0oeC0wLjIpKjI1KSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMi45ODMxNDE1MjY0NDIzMDI1IiwiMy4xMjAzNzQwOTg1NTc2ODc4IiwiLTMuMTkzMDM1ODg4NjcxODciLCIyLjkxMDQ3OTczNjMyODEyMDMiXX1d
 				+ "   vec4 color =  texture(uSampler, vTextureCoord); \n"
-				+ "   float fogVisibility = 1.0 - exp(-7.0*(v3Position.y-0.035+uEyePosition.y/128.0)); \n"		// 0.035 = MAX_TREE_HIGH / 128.0              CAMERA.y = [-128, 128]
+				+ "   float fogVisibility = 1.0 / (1+exp(-(v3Position.y-0.2+uEyePosition.y/128.0)*25)); \n"		// 0.035 = MAX_TREE_HIGH / 128.0              CAMERA.y = [-128, 128]
 				+ "   fogVisibility = clamp(fogVisibility, 0.0, 1.0); \n"				
 				+ "   gl_FragColor =  mix(vec4(uFogColor, 1.0), color, fogVisibility); \n"
 				
 					
 				+ "} ";
+		
 						
 		if(gl.isGL3core()){
             debug("GLSL", "GL3 core detected: explicit add #version 130 to shaders");

@@ -427,9 +427,9 @@ public class RenderTerrainMultitexture implements Model {
 				+ "varying    vec3  vWorldNormal; \n"
 				+ "varying    vec4  vv4WorldPosition; \n"
 				+ "varying    float fogVisibility; \n"				
-				// http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJlXigtKCgwLjAxNSp4KV4yLjUpKSIsImNvbG9yIjoiIzAwMDAwMCJ9LHsidHlwZSI6MTAwMCwid2luZG93IjpbIi0xODQuNzQxMTExMjk3NjI1NzQiLCIxODQuNzQxMTExMjk3NjI1NzQiLCItMS4yNDk5OTk5OTk5OTk5OTk4IiwiMS4yNDk5OTk5OTk5OTk5OTk4Il19XQ--
-				+ "const   	  float fogDensity = 0.015; \n"				// farZPlane in the Perspective matrix (0.028  for 100) (0.018 for 150) (0.01 for 330)				
-				+ "const      float fogGradient = 2.5; \n"	
+				// http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJlXigtKCgwLjAwOCp4KV4xMC41KSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMTg0Ljc0MTExMTI5NzYyNTc0IiwiMTg0Ljc0MTExMTI5NzYyNTc0IiwiLTEuMjQ5OTk5OTk5OTk5OTk5OCIsIjEuMjQ5OTk5OTk5OTk5OTk5OCJdfV0-
+				+ "const   	  float fogDensity = 0.008; \n"				// farZPlane in the Perspective matrix (0.028  for 100) (0.018 for 150) (0.01 for 330)				
+				+ "const      float fogGradient = 10.5; \n"	
 				
 				+ "void main(void) {\n" 
 				+ "  vTextureCoord = av2TextureCoord; \n"										// Pass-through

@@ -50,6 +50,47 @@ public class RawOBJ {
 		return indices;
 	}
 	
+	public static RawOBJ buildQuad() {
+		// A ---------------  D
+		// |                  |
+		// |                  |
+		// |                  |
+		// |                  |
+		// B ---------------- C
+		
+		// Create vertex data
+		float[] positions = new float[] {	                 
+				 // ABCD
+			 	 -1.0f,    1.0f,   0.0f,
+				 -1.0f,   -1.0f,   0.0f,
+				  1.0f,   -1.0f,   0.0f,
+				  1.0f,    1.0f,   0.0f,
+		};
+		
+		int[] indices = new int[] { 
+				 0,  1,  3,  	// ABD
+				 3,  1,  2, 	// DBC
+		};
+		
+		int nElements = indices.length; 
+		
+		// Create texture data	
+		// The origin of textures in OpenGL is the lower-left corner.
+		float min = 0.0f;
+		float max = 1.0f;
+		float[] textureCoords = new float[] {	
+				// ABCD
+				min, max,
+				min, min,
+				max, min,
+				max, max,    	
+		};   
+		
+		RawOBJ quad = new RawOBJ(nElements, positions, textureCoords, textureCoords, indices);
+		
+		return quad;
+	}
+	
 	public static RawOBJ buildCube() {
 		//                                     ...... A....
 		//                         ......----               ----- .....                                
@@ -230,5 +271,5 @@ public class RawOBJ {
 		
 		return cube;
 	}
-		
+	
 }
