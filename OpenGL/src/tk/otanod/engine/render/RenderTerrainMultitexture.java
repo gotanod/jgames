@@ -523,7 +523,7 @@ public class RenderTerrainMultitexture implements Model {
 				+ "} ";
 						
 		if(gl.isGL3core()){
-            System.out.println("GL3 core detected: explicit add #version 130 to shaders");
+            debug("GLSL", "GL3 core detected: explicit add #version 130 to shaders");
             sVertexShaderCode = "#version 130\n"+sVertexShaderCode;
             sFragmentShaderCode = "#version 130\n"+sFragmentShaderCode;
         }
@@ -697,7 +697,7 @@ public class RenderTerrainMultitexture implements Model {
 	}
 	
 	private void debug(String tag, String msg) {
-		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+		//System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
 	}
 
 }

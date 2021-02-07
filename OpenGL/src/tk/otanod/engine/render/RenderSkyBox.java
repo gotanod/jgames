@@ -286,7 +286,7 @@ public class RenderSkyBox implements Model {
 		//	gl.glBindVertexArray(this.vaos[0]);								// done in calling method
 		gl.glEnableVertexAttribArray(shaderPositionGLSL);					// Enable the VAO slot (matches the GLSL location) and link it with the previous bound VBO
 		debug("glEnableVertexAttribArray", "" + gl.glGetError());			// Error 1282 means that VAO is not active
-		gl.glVertexAttribPointer(shaderPositionGLSL, componentsPerVertex, GL4ES3.GL_FLOAT, false , 0 , 0);	//	 glVertexAttribPointer( ShaderAttibIndex, sizePerElement, TypeValue, normalized?, stride, offset
+		gl.glVertexAttribPointer(shaderPositionGLSL, componentsPerVertex, GL4ES3.GL_FLOAT, false , 0 , 0);	//	 glVertexAttribPointer( ShaderAttibIndex, sizePerElement, TypeValue, to_be_normalized?, stride, offset
 		debug("glVertexAttribPointer", "" + gl.glGetError());
 
 		// 3.5 Unbind the VBO
@@ -623,7 +623,7 @@ public class RenderSkyBox implements Model {
 	}	
 	
 	private void debug(String tag, String msg) {
-		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+		//System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
 	}
 
 }

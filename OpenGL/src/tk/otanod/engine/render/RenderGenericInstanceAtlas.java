@@ -21,18 +21,16 @@ import java.nio.IntBuffer;
 
 import com.jogamp.opengl.GL4ES3;
 import com.jogamp.opengl.GLAutoDrawable;
-import com.jogamp.opengl.GLEventListener;
-
 import tk.otanod.engine.camera.Camera;
 import tk.otanod.engine.light.Light;
-import tk.otanod.engine.terrain.RawTerrain;
 import tk.otanod.libIO.RawImage;
 import tk.otanod.libMath.M4f;
 import tk.otanod.libMath.V3f;
+import tk.otanod.libOBJ.RawOBJ;
 
 
 
-public class RenderTerrain implements Model {
+public class RenderGenericInstanceAtlas implements Model {
 
 	private boolean isInitialized = false;
 	
@@ -42,20 +40,25 @@ public class RenderTerrain implements Model {
 	private float zWorld;
 	private float xScale;
 	private float yScale;
-	private float zScale;	
+	private float zScale;
+	// Per instance
+	private int instances;
 	
 	// Light
 	private Light light;
 	
 	// Projection matrix
 	private M4f m4Projection;
-	
 	// View Matrix
 	private V3f v3Eye;
 	private M4f m4View;
+	// World matrix
+	//private M4f m4World;
+	private float[] instancesM4World;
 	
 	// Texture
-	RawImage textureImage;
+	private RawImage textureImage;
+	private float[] instancesAtlasArea;
 	
 	// Model
 	private int nElements;
@@ -75,21 +78,26 @@ public class RenderTerrain implements Model {
 	private int programGLSL;
 	
 	// GLSL
-    private int[] aAttribLocation = new int[11];
+    private int[] aAttribLocation = new int[14];
+
 	private static final int ATTRIB_POSITION = 0;
 	private static final int ATTRIB_TEXTURE_COORDS = 1;
 	private static final int ATTRIB_NORMAL = 2;
 	private static final int ATTRIB_SAMPLER = 3;
-	private static final int ATTRIB_PV = 4;
-	private static final int ATTRIB_M = 5;
-	private static final int ATTRIB_LIGHT_POSITION = 6;
-	private static final int ATTRIB_LIGHT_AMBIENT_COLOR = 7;
-	private static final int ATTRIB_LIGHT_DIFFUSE_COLOR = 8;
-	private static final int ATTRIB_LIGHT_SPECULAR_COLOR = 9;
-	private static final int ATTRIB_EYE_POSITION = 10;
+	private static final int ATTRIB_P = 4;
+	private static final int ATTRIB_V = 5;
+	//private static final int ATTRIB_M = 6;
+	private static final int INSTANCE_M = 6;	
+	private static final int ATTRIB_LIGHT_POSITION = 7;
+	private static final int ATTRIB_LIGHT_AMBIENT_COLOR = 8;
+	private static final int ATTRIB_LIGHT_DIFFUSE_COLOR = 9;
+	private static final int ATTRIB_LIGHT_SPECULAR_COLOR = 10;
+	private static final int ATTRIB_EYE_POSITION = 11;
+	private static final int ATTRIB_SKYCOLOR = 12;
+	private static final int INSTANCE_ATLAS = 13;	
 	
-	public RenderTerrain(V3f position, V3f scale, RawTerrain model, RawImage textureImage, Camera camera, Light light, M4f projection) {	
-
+	public RenderGenericInstanceAtlas(int instances, float[] instancesM4View, float[] instancesAtlasArea, RawOBJ model, RawImage textureImage, Camera camera, Light light, M4f projection) {
+		
 		// Model
 		this.indices = model.getIndices();
 		this.nElements = model.getnElements();
@@ -98,12 +106,13 @@ public class RenderTerrain implements Model {
 		this.normals = model.getNormals();
 		
 		// Texture
-		this.textureImage = textureImage; 
+		this.textureImage = textureImage;
+		this.instancesAtlasArea = instancesAtlasArea;
 		
 		// World position
-		updatePosition(position.x(), position.y(), position.z());
-		// World scale
-		updateScale(scale.x(), scale.y(), scale.z());
+		this.instances = instances;
+		this.instancesM4World = instancesM4View;
+
 		// View matrix
 		update(camera);
 		// Light
@@ -127,20 +136,24 @@ public class RenderTerrain implements Model {
 
 	@Override
 	public void updatePosition(float x, float y, float z) {
-		// World position
-		this.xWorld = x;
-		this.yWorld = y;
-		this.zWorld = z;
-	}
-	
-	@Override
-	public void updateScale(float xScale, float yScale, float zScale) {
-		// World scale
-		this.xScale = xScale;
-		this.yScale = yScale;
-		this.zScale = zScale;		
+//		// World position
+//		this.xWorld = x;
+//		this.yWorld = y;
+//		this.zWorld = z;
+//		
+//		this.m4World = new M4f().scale(this.xScale, this.yScale, this.zScale).setTranslate(this.xWorld, this.yWorld, this.zWorld);
 	}
 
+	@Override
+	public void updateScale(float xScale, float yScale, float zScale) {
+//		// World scale
+//		this.xScale = xScale;
+//		this.yScale = yScale;
+//		this.zScale = zScale;
+//		
+//		this.m4World = new M4f().scale(this.xScale, this.yScale, this.zScale).setTranslate(this.xWorld, this.yWorld, this.zWorld);		
+	}
+	
 	@Override
 	public void update(Camera camera) {
 		// View matrix
@@ -186,13 +199,14 @@ public class RenderTerrain implements Model {
 		//
 	}
 	
-	
 	private void initialize(GLAutoDrawable drawable) {
 		// 1. Get context
 		GL4ES3 gl = drawable.getGL().getGL4ES3();
 
+		// 2. Create a GLSL program
+		this.programGLSL = getGLSLProgram(gl);
 		
-		// 2. Generate Vertex Array Object (VAO)
+		// 3. Generate Vertex Array Object (VAO)
 		this.nVAOs = 1;
 		this.vaos = new int[nVAOs]; 							// Our Vertex Array Object ID, gl functions need pointers, that's why we use an object (=pointer). An array pointer
 		
@@ -200,12 +214,10 @@ public class RenderTerrain implements Model {
 		int vao = this.vaos[0];
 		gl.glBindVertexArray(vao); 						//	2.  Bind our Vertex Array Object so we can use it   
 		
-		// 3. Create a GLSL program
-		this.programGLSL = getGLSLProgram(gl);
 		
 		// 3. Add data to the VAO	
 		// 3.2 Create a VBO
-		this.nVBOs = 4;
+		this.nVBOs = 6;
 		this.vbos = new int[this.nVBOs];
 		gl.glGenBuffers(this.nVBOs, this.vbos, 0);					// Buffer object names returned by a call to glGenBuffers are not returned by subsequent calls, unless they are first deleted with glDeleteBuffers.
 		
@@ -213,23 +225,26 @@ public class RenderTerrain implements Model {
 		addVBOtoVAO(gl, this.positions, this.vbos[1], 3, ATTRIB_POSITION);
 		addVBOtoVAO(gl, this.textureCoords, this.vbos[2], 2, ATTRIB_TEXTURE_COORDS);
 		addVBOtoVAO(gl, this.normals, this.vbos[3], 3, ATTRIB_NORMAL);
+		
+		addInstanceVBOtoVAO(gl, this.vbos[4], this.instancesM4World, this.aAttribLocation[INSTANCE_M], 16, 4);
+		addInstanceVBOtoVAO(gl, this.vbos[5], this.instancesAtlasArea, this.aAttribLocation[INSTANCE_ATLAS], 4, 4);
+
 
 		// 4. Unbind the VAO, just binding the default 0 VAO (0=no using VAOs)
 		gl.glBindVertexArray(0); 							// Disable our Vertex Array Object
-		
+
 		
 		// 5. Create the textures (They are NOT part of the VAO)
-		this.nTextures = 1;
-		this.textureIDs = new int[this.nTextures];
-		gl.glGenTextures(this.nTextures, this.textureIDs, 0);
-		
-		textureUnit = TextureUnitManager.getInstance().getTextureNumber();
-		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + textureUnit);  				// activate the texture unit first before binding texture
-		createTextureBitmapRGBA(gl, this.textureIDs[0], textureImage);
-		
-		textureImage = null;			// after creating the texture (GPU) the image is no longer needed
-		
-        
+		if ( TextureUnitManager.getInstance().isTextureNumberLoaded(textureImage.getName()) ) {
+			textureUnit = TextureUnitManager.getInstance().getTextureNumber(textureImage.getName());
+		} else {
+			this.nTextures = 1;
+			this.textureIDs = new int[this.nTextures];
+			gl.glGenTextures(this.nTextures, this.textureIDs, 0);
+			this.textureUnit = TextureUnitManager.getInstance().getTextureNumber(textureImage.getName());
+			createTexture(gl, this.textureIDs[0], this.textureUnit, textureImage);			
+		}		
+		        
 	}
 
 	private void addEBOtoVAO(GL4ES3 gl, int[] mData, int ebo) {
@@ -273,6 +288,35 @@ public class RenderTerrain implements Model {
 		gl.glVertexAttribPointer(shaderPositionGLSL, componentsPerVertex, GL4ES3.GL_FLOAT, false , 0 , 0);	//	 glVertexAttribPointer( ShaderAttibIndex, sizePerElement, TypeValue, normalized?, stride, offset
 		debug("glVertexAttribPointer", "" + gl.glGetError());
 
+		// 3.5 Unbind the VBO
+		gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, 0);						//	Unbind buffers
+	}
+	
+	private void addInstanceVBOtoVAO(GL4ES3 gl, int vbo, float[] mData, int attrib_location, int stride, int elements) {
+		// 3.1 Prepare the data, we need a FloatBuffer instead of a Float Array
+		FloatBuffer fbData = getFloatBuffer(mData);
+		
+		// 3.2 Transfer the data to the GPU
+		final int BYTES_PER_FLOAT = Float.SIZE / Byte.SIZE;  				// float has 4 bytes
+		int numBytes = (int) (mData.length * BYTES_PER_FLOAT);
+		gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, vbo);						// Enables the VBO, to write there the data and link it later with the VAO slot
+		gl.glBufferData(GL4ES3.GL_ARRAY_BUFFER, numBytes, fbData, GL4ES3.GL_STATIC_DRAW);	// transfers data to the VBO
+		//gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, 0);						
+		
+		// 3.3 Add the VBO to the VAO 
+		//gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, vbo);
+		//	gl.glBindVertexArray(this.vaos[0]);								// done in calling method
+		
+		for ( int i = 0; i < (stride/elements); i++) {
+			int shaderPositionGLSL = attrib_location + i;				// Get the slot used by the GLSL program, that we saved in the array aAttribLocation 	
+			gl.glEnableVertexAttribArray(shaderPositionGLSL);					// Enable the VAO slot (matches the GLSL location) and link it with the previous bound VBO
+			debug("glEnableVertexAttribArray", "" + gl.glGetError());			// Error 1282 means that VAO is not active
+			gl.glVertexAttribPointer(shaderPositionGLSL, elements, GL4ES3.GL_FLOAT, false , stride * BYTES_PER_FLOAT, i*elements*BYTES_PER_FLOAT);	//	 STRIDE AND OFFSET IN BYTES!!!!!!
+			debug("glVertexAttribPointer", "" + gl.glGetError());
+			gl.glVertexAttribDivisor(shaderPositionGLSL, 1);
+			debug("glVertexAttribDivisor", "" + gl.glGetError());
+		}
+		
 		// 3.5 Unbind the VBO
 		gl.glBindBuffer(GL4ES3.GL_ARRAY_BUFFER, 0);						//	Unbind buffers
 	}
@@ -338,29 +382,44 @@ public class RenderTerrain implements Model {
 		// gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);							// you can avoid this call, if you don't reuse the Texture Unit between model
 		gl.glUniform1i(this.aAttribLocation[ATTRIB_SAMPLER], textureUnit);			// 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, ..., 15 for GL_TEXTURE15
 		
-		// 4.2 PVM matrix			
-		M4f M = new M4f().scale(this.xScale, this.yScale, this.zScale).setTranslate(this.xWorld, this.yWorld, this.zWorld);
-		M4f PV = m4View.clone().preMultiply(m4Projection);
-		
-		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_PV], 1, false, PV.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
-		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_M], 1, false, M.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
+		// 4.2 PVM matrix					
+		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_P], 1, false, m4Projection.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
+		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_V], 1, false, m4View.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
+//		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_M], 1, false, m4World.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
 		
 		// 4.3 Light uniforms
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_LIGHT_POSITION],       1, light.getPosition(),      0);
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_LIGHT_AMBIENT_COLOR],  1, light.getAmbientColor(),  0);
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_LIGHT_DIFFUSE_COLOR],  1, light.getDiffuseColor(),  0);
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_LIGHT_SPECULAR_COLOR], 1, light.getSpecularColor(), 0);
+		gl.glUniform3fv(this.aAttribLocation[ATTRIB_SKYCOLOR], 1, light.getSkyColor(), 0);	
 		
 		// 4.5 Camera/Eye position
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_EYE_POSITION],  1, v3Eye.getFloats(),   0);
+
+		// 4.6 Per instance
+
 		
 		// 5: draw the VAOs
 		gl.glBindVertexArray(this.vaos[0]); 												// Bind our Vertex Array Object  
 		
+
 		// When using glDrawElements we're going to draw using indices provided in the element buffer object currently bound:
 		// Leave the ELEMENT_ARRAY_BUFFER bound inside the VAO, just avoid the unbind after creating it. And you don't need to call it here if it is already bound!!!
-		// gl.glBindBuffer(GL4ES3.GL_ELEMENT_ARRAY_BUFFER, this.vbos[0]);						
-		gl.glDrawElements(GL4ES3.GL_TRIANGLES, this.nElements, GL4ES3.GL_UNSIGNED_INT, 0); 	// DrawElements triangles, count, type,  OFFSET
+		// gl.glBindBuffer(GL4ES3.GL_ELEMENT_ARRAY_BUFFER, this.vbos[0]);
+		if ( this.textureImage.isTransparent() ) {
+			gl.glDisable(GL4ES3.GL_CULL_FACE); 	// Blending can only show objects behind but not the internal object
+			gl.glEnable(GL4ES3.GL_BLEND);
+			gl.glBlendFunc(GL4ES3.GL_SRC_ALPHA, GL4ES3.GL_ONE_MINUS_SRC_ALPHA);
+		}
+			
+		gl.glDrawElementsInstanced(GL4ES3.GL_TRIANGLES, this.nElements, GL4ES3.GL_UNSIGNED_INT, 0, instances);
+			
+		if ( this.textureImage.isTransparent() ) {
+			gl.glDisable(GL4ES3.GL_BLEND);
+			gl.glEnable(GL4ES3.GL_CULL_FACE); 	// Blending can only show objects behind but not the internal object
+		}
+
 		
 		// 6: Unbind
 		gl.glBindVertexArray(0); 					// Unbind our Vertex Array Object or bind to default VAO
@@ -399,8 +458,11 @@ public class RenderTerrain implements Model {
 				+ "  precision mediump int; \n" 			// GLSL ES section 4.5.2
 				+ "#endif \n" 
 				
-				+ "uniform 	  mat4  uPVmatrix; \n"			// PV matrix, column major, pre-multiplied, from world to view and projection space
-				+ "uniform    mat4  uMmatrix; \n"			// Model matrix, from model to world
+				+ "uniform 	  mat4  uPmatrix; \n"			// PV matrix, column major, pre-multiplied, from world to view and projection space
+				+ "uniform 	  mat4  uVmatrix; \n"			// PV matrix, column major, pre-multiplied, from world to view and projection space
+				//+ "uniform    mat4  uMmatrix; \n"			// Model matrix, from model to world
+				+ "attribute  mat4  am4InstanceMmatrix; \n"
+
 				+ "attribute  vec4  av4Position; \n" 		// the vertex shader
 				+ "attribute  vec2  av2TextureCoord; \n"	// Texture coords
 				+ "attribute  vec3  av3Normal; \n"
@@ -408,14 +470,33 @@ public class RenderTerrain implements Model {
 				+ "varying    vec2  vTextureCoord; \n"
 				+ "varying    vec3  vWorldNormal; \n"
 				+ "varying    vec4  vv4WorldPosition; \n"
+				+ "varying    float fogVisibility; \n"	
 				
-				+ "void main(void) {\n" 
+				+ "attribute  vec4  a4fInstanceAtlas; \n"
+				+ "varying    vec4  v4fInstanceAtlas; \n"
+				
+				// http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJlXigtKCgwLjAwOCp4KV4xMC41KSkiLCJjb2xvciI6IiMwMDAwMDAifSx7InR5cGUiOjEwMDAsIndpbmRvdyI6WyItMTg0Ljc0MTExMTI5NzYyNTc0IiwiMTg0Ljc0MTExMTI5NzYyNTc0IiwiLTEuMjQ5OTk5OTk5OTk5OTk5OCIsIjEuMjQ5OTk5OTk5OTk5OTk5OCJdfV0-
+				+ "const   	  float fogDensity = 0.008; \n"				// farZPlane in the Perspective matrix (0.01 for 120)				
+				+ "const      float fogGradient = 10.5; \n"				// start of the fog (8.5 for 60) (20.5 for 80)
+				
+				+ "void main(void) {\n"
+				
 				+ "  vTextureCoord = av2TextureCoord; \n"										// Pass-through
 				
-				+ "  vv4WorldPosition = uMmatrix * av4Position; \n"								// Vertex World position
-				+ "  gl_Position = uPVmatrix * vv4WorldPosition; \n"							// Vertex position in Projection/View/World
+				+ "  v4fInstanceAtlas = a4fInstanceAtlas;  \n"									// Pass-through
+				
+//				+ "  vv4WorldPosition = uMmatrix * av4Position; \n"								// Vertex World position
+				+ "  vv4WorldPosition = am4InstanceMmatrix * av4Position; \n"								// Vertex World position
+				
+				+ "  vec4 v4ViewPosition = uVmatrix * vv4WorldPosition; \n"								// Vertex World position				
+				+ "  gl_Position = uPmatrix * v4ViewPosition; \n"							// Vertex position in Projection/View/World
 				 
-				+ "  vWorldNormal = normalize((uMmatrix * vec4(av3Normal, 0.0)).xyz); \n"		// Normal vector in the world (from model to world) w=0.0 to ignore translations, normalize to ignore scales, only rotations affect the normal vector
+//				+ "  vWorldNormal = normalize((uMmatrix * vec4(av3Normal, 0.0)).xyz); \n"		// Normal vector in the world (from model to world) w=0.0 to ignore translations, normalize to ignore scales, only rotations affect the normal vector
+				+ "  vWorldNormal = normalize((am4InstanceMmatrix * vec4(av3Normal, 0.0)).xyz); \n"		// Normal vector in the world (from model to world) w=0.0 to ignore translations, normalize to ignore scales, only rotations affect the normal vector
+				
+				+ "  float distanceToCamera = length(v4ViewPosition.xyz); \n"
+				+ "  fogVisibility = exp(-pow(distanceToCamera*fogDensity, fogGradient)); \n"
+				
 				+ "} ";
 
 		String sFragmentShaderCode =
@@ -435,6 +516,11 @@ public class RenderTerrain implements Model {
 	            + "uniform   sampler2D uSampler; \n"											// it will receive 0 for GL_TEXTURE0, 1 for GL_TEXTURE1, 2 for GL_TEXTURE2, ... GL_TEXTURE15
 				+ "varying   vec3  vWorldNormal; \n"
 				+ "varying   vec4  vv4WorldPosition; \n"
+
+				+ "varying   float   fogVisibility; \n"				
+				+ "uniform	 vec3    uSkyColor; \n"
+				
+				+ "varying    vec4  v4fInstanceAtlas; \n"				
 				
 				+ "uniform struct Light {\n"
 				+ "   vec3  position; \n"				
@@ -446,23 +532,34 @@ public class RenderTerrain implements Model {
 				+ "uniform   vec3  uEyePosition; \n"
 	            
 				+ "void main (void) { \n"
+
+				//    Texture
+				+ "   float s = vTextureCoord.s * v4fInstanceAtlas.z + v4fInstanceAtlas.x; \n"
+				+ "   float t = (1.0 - vTextureCoord.t) * v4fInstanceAtlas.w + v4fInstanceAtlas.y; \n"				// without flipping, i.e. upside down, just switch the t axis of the quad texture coordinates
+//				+ "   float t = vTextureCoord.t * v4fInstanceAtlas.w + (1.0 - v4fInstanceAtlas.w - v4fInstanceAtlas.y); \n"		// if you flip your image
+				+ "   vec4 textureColor = texture2D(uSampler, vec2(s, t)); \n"										// Image with RGBA color format
+//				+ "   vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"			// Image with RGBA color format
+				+ "   if ( textureColor.a < 0.2 ) { discard; } \n"													// avoids that transparent pixels update the depth buffer
+
 				
 				//	 Normalize the fragment normal ==> Interpolating normals into a face can (and almost always will) result in a shortening of the normal. That's why the highlight is darker in the center of a face and brighter at corners and edges. If you do this, just re-normalize the normal in the fragment shader:
 				+ "   vec3 fragmentWorldNormal = normalize(vWorldNormal); \n"
+				
+				+ "   if(!gl_FrontFacing) { fragmentWorldNormal = -fragmentWorldNormal; } \n"						// TRICK while we implement BILLBOARDING for grass
 				
 				//    ambient
 				+ "   vec3 ambient = uLight.ambientColor; \n"
 				
 				+ "   vec3 localUnitToLight = normalize(uLight.position - vv4WorldPosition.xyz); \n"
 				//    diffuse
-				+ "   float diffuseCoefficient = dot(fragmentWorldNormal, localUnitToLight); \n"							// angle between Light and Normal
-				+ "   diffuseCoefficient = clamp(diffuseCoefficient, 0.0, 1.0); \n"											// clamp to range [0,1]. clamp returns the value of x constrained to the range minVal to maxVal. The returned value is computed as min(max(x, minVal), maxVal).
+				+ "   float diffuseCoefficient = dot(fragmentWorldNormal, localUnitToLight); \n"					// angle between Light and Normal
+				+ "   diffuseCoefficient = clamp(diffuseCoefficient, 0.0, 1.0); \n"									// clamp to range [0,1]. clamp returns the value of x constrained to the range minVal to maxVal. The returned value is computed as min(max(x, minVal), maxVal).
 				+ "   vec3 diffuse = diffuseCoefficient * uLight.diffuseColor; \n"									
 			    
 				//    specular
 				+ "   float specularCoefficient = 0.0; \n"
-				+ "   if ( diffuseCoefficient > 0.0 ) { \n"																	// no need to calculate specular light if he surface is not looking to the light source
-				+ "       vec3 reflected = reflect(-localUnitToLight, fragmentWorldNormal); \n"								// Incident, Normal    ORDER is important!!!!!
+				+ "   if ( diffuseCoefficient > 0.0 ) { \n"															// no need to calculate specular light if the surface is not looking to the light source
+				+ "       vec3 reflected = reflect(-localUnitToLight, fragmentWorldNormal); \n"						// Incident, Normal    ORDER is important!!!!!
 				+ "       vec3 vUnitToEye = normalize(uEyePosition - vv4WorldPosition.xyz); \n"
 				+ "       specularCoefficient = dot(reflected, vUnitToEye); \n"
 				+ "       specularCoefficient = clamp(specularCoefficient, 0.0, 1.0); \n"
@@ -470,13 +567,9 @@ public class RenderTerrain implements Model {
 				+ "   vec3 specular = pow(specularCoefficient, 1.0) * uLight.specularColor; \n"			// shininessConstant = 1.0
 				
 				//    Final color
-				+ "   gl_FragColor =  vec4( ambient+(diffuse+specular), 1.0 ) * texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"		// Image with RGBA color format				
-//				+ "   gl_FragColor =  texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t)); \n"		// Image with RGBA color format				
-//				+ "   gl_FragColor =  vec4(1.0, 0.0, 0.3, 1.0); \n"		// Image with RGBA color format				
-				
-				//    Gamma correction			// done by GL gl.glEnable(GL4ES3.GL_FRAMEBUFFER_SRGB);
-				// + "   float gamma = 2.2; \n"										
-				// + "   gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1.0/gamma)); \n"				
+				+ "   vec4 finalColor =  vec4( ambient+diffuse+specular, 1.0 ) * textureColor; \n"
+				+ "   gl_FragColor =  mix(vec4(uSkyColor,1.0), finalColor, fogVisibility); \n"					
+			
 				+ "} ";
 						
 		if(gl.isGL3core()){
@@ -580,18 +673,23 @@ public class RenderTerrain implements Model {
         
         // STEP 7: UNIFORM link to JAVA
         // Link GLSL with java
-        this.aAttribLocation[ATTRIB_POSITION] 		= gl.glGetAttribLocation(mShaderProgram, "av4Position");
-        this.aAttribLocation[ATTRIB_TEXTURE_COORDS] = gl.glGetAttribLocation(mShaderProgram, "av2TextureCoord");        
-        this.aAttribLocation[ATTRIB_NORMAL] 		= gl.glGetAttribLocation(mShaderProgram, "av3Normal");        
-        this.aAttribLocation[ATTRIB_SAMPLER]	    = gl.glGetUniformLocation(mShaderProgram, "uSampler");      
-        this.aAttribLocation[ATTRIB_PV]				= gl.glGetUniformLocation(mShaderProgram, "uPVmatrix");  
-        this.aAttribLocation[ATTRIB_M]				= gl.glGetUniformLocation(mShaderProgram, "uMmatrix");
+        this.aAttribLocation[ATTRIB_POSITION] 			= gl.glGetAttribLocation(mShaderProgram, "av4Position");
+        this.aAttribLocation[ATTRIB_TEXTURE_COORDS] 	= gl.glGetAttribLocation(mShaderProgram, "av2TextureCoord");        
+        this.aAttribLocation[ATTRIB_NORMAL] 			= gl.glGetAttribLocation(mShaderProgram, "av3Normal");
+        
+        this.aAttribLocation[ATTRIB_SAMPLER]	    	= gl.glGetUniformLocation(mShaderProgram, "uSampler");      
+        this.aAttribLocation[ATTRIB_P]					= gl.glGetUniformLocation(mShaderProgram, "uPmatrix");  
+        this.aAttribLocation[ATTRIB_V]					= gl.glGetUniformLocation(mShaderProgram, "uVmatrix");  
+        //this.aAttribLocation[ATTRIB_M]				= gl.glGetUniformLocation(mShaderProgram, "uMmatrix");
+        this.aAttribLocation[INSTANCE_M]  				= gl.glGetAttribLocation(mShaderProgram, "am4InstanceMmatrix");
+        this.aAttribLocation[INSTANCE_ATLAS]  			= gl.glGetAttribLocation(mShaderProgram, "a4fInstanceAtlas");
+        
         this.aAttribLocation[ATTRIB_LIGHT_POSITION]			= gl.glGetUniformLocation(mShaderProgram, "uLight.position");
         this.aAttribLocation[ATTRIB_LIGHT_AMBIENT_COLOR]	= gl.glGetUniformLocation(mShaderProgram, "uLight.ambientColor");
         this.aAttribLocation[ATTRIB_LIGHT_DIFFUSE_COLOR]	= gl.glGetUniformLocation(mShaderProgram, "uLight.diffuseColor");
         this.aAttribLocation[ATTRIB_LIGHT_SPECULAR_COLOR]	= gl.glGetUniformLocation(mShaderProgram, "uLight.specularColor");
-        this.aAttribLocation[ATTRIB_EYE_POSITION]  	= gl.glGetUniformLocation(mShaderProgram, "uEyePosition");
-
+        this.aAttribLocation[ATTRIB_EYE_POSITION]  			= gl.glGetUniformLocation(mShaderProgram, "uEyePosition");
+        this.aAttribLocation[ATTRIB_SKYCOLOR]  				= gl.glGetUniformLocation(mShaderProgram, "uSkyColor");
         
         // STEP 8: Detach and delete the shaders, they are no longer needed after the program is linked and compiled
         gl.glDetachShader(mShaderProgram, vertexShader);
@@ -607,35 +705,36 @@ public class RenderTerrain implements Model {
         return(mShaderProgram);
 	}	
 
-	public void createTextureBitmapRGBA(GL4ES3 gl, int textureID, RawImage tex) {
-    	
-		gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
-		//gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);
+	public void createTexture(GL4ES3 gl, int textureID, int textureUnit, RawImage tex) {
+
+		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + textureUnit);  										// activate the texture unit first before binding texture
 		
-		// Scale up/down if the texture if smaller.      
-		// GL_NEAREST - no filtering, no mipmaps
-		// GL_LINEAR - filtering, no mipmaps
-		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER, GL4ES3.GL_LINEAR);		// scale linearly when image smaller than texture
-		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER, GL4ES3.GL_LINEAR);
-		
-		// Use mipmaps. Scale up/down if the texture if smaller.
-		// GL_NEAREST_MIPMAP_NEAREST - no filtering, sharp switching between mipmaps
-		// GL_NEAREST_MIPMAP_LINEAR - no filtering, smooth transition between mipmaps
-		// GL_LINEAR_MIPMAP_NEAREST - filtering, sharp switching between mipmaps
-		// GL_LINEAR_MIPMAP_LINEAR - filtering, smooth transition between mipmaps
-		gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER,   GL4ES3.GL_LINEAR);	// Magnifier only supports GL_LINEAR or GL_NEAREST
-		gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER,  GL4ES3.GL_LINEAR_MIPMAP_LINEAR);	// down
-		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAX_LOD, 1000.0f);
-		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_LOD, -1000.0f);
-		
-		// what to do if not enough image
-		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
-		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
-		gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
-		gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
+        gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
+        //gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);
+        
+        // Scale up/down if the texture if smaller.      
+        // GL_NEAREST - no filtering, no mipmaps
+        // GL_LINEAR - filtering, no mipmaps
+//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER, GL4ES3.GL_LINEAR);		// scale linearly when image smaller than texture
+//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER, GL4ES3.GL_LINEAR);
+        
+        // Use mipmaps. Scale up/down if the texture if smaller.
+        // GL_NEAREST_MIPMAP_NEAREST - no filtering, sharp switching between mipmaps
+        // GL_NEAREST_MIPMAP_LINEAR - no filtering, smooth transition between mipmaps
+        // GL_LINEAR_MIPMAP_NEAREST - filtering, sharp switching between mipmaps
+        // GL_LINEAR_MIPMAP_LINEAR - filtering, smooth transition between mipmaps
+        gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER,   GL4ES3.GL_LINEAR);	// Magnifier only supports GL_LINEAR or GL_NEAREST
+        gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER,  GL4ES3.GL_LINEAR_MIPMAP_LINEAR);	// down
+//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAX_LOD, 1000.0f);
+//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_LOD, -1000.0f);
+        
+        // what to do if not enough image
+        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
+        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
+//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
+//        gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
         
        	//System.out.println(">> TEXTURE 4 channels");
-       	//GL2ES2.texImage2D(GL2ES2.GL_TEXTURE_2D, 0, GL2ES2.GL_RGBA, GL2ES2.GL_RGBA, GL2ES2.GL_UNSIGNED_BYTE, bitmap);  
        	gl.glTexImage2D(GL4ES3.GL_TEXTURE_2D, 0, GL4ES3.GL_SRGB_ALPHA, tex.width, tex.height, 0, GL4ES3.GL_RGBA, GL4ES3.GL_UNSIGNED_BYTE, tex.byteDataBuffer);       	       	      	       	
 
        	// Generate MIPMAPs
@@ -648,7 +747,7 @@ public class RenderTerrain implements Model {
 	}
 	
 	private void debug(String tag, String msg) {
-		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+		//System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
 	}
 
 }

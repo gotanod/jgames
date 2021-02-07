@@ -528,7 +528,7 @@ public class RenderGenericInstance implements Model {
 				//	 Normalize the fragment normal ==> Interpolating normals into a face can (and almost always will) result in a shortening of the normal. That's why the highlight is darker in the center of a face and brighter at corners and edges. If you do this, just re-normalize the normal in the fragment shader:
 				+ "   vec3 fragmentWorldNormal = normalize(vWorldNormal); \n"
 				
-				+ "   if(!gl_FrontFacing) { fragmentWorldNormal = -fragmentWorldNormal; } \n"						// TRICK while we implement BILLBOARDING for grass
+//				+ "   if(!gl_FrontFacing) { fragmentWorldNormal = -fragmentWorldNormal; } \n"						// TRICK while we implement BILLBOARDING for grass
 				
 				//    ambient
 				+ "   vec3 ambient = uLight.ambientColor; \n"
@@ -729,7 +729,7 @@ public class RenderGenericInstance implements Model {
 	}
 	
 	private void debug(String tag, String msg) {
-		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+		//System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
 	}
 
 }

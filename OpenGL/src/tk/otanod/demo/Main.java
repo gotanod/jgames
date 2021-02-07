@@ -28,10 +28,12 @@ import tk.otanod.engine.awt.Pointer.State;
 import tk.otanod.engine.awt.Window;
 import tk.otanod.engine.awt.WindowListeners;
 import tk.otanod.engine.camera.Camera;
+import tk.otanod.engine.font.Font;
+import tk.otanod.engine.font.FontEffect;
 import tk.otanod.engine.light.Light;
 import tk.otanod.engine.render.Model;
-import tk.otanod.engine.render.RenderGeneric;
 import tk.otanod.engine.render.RenderGenericInstance;
+import tk.otanod.engine.render.RenderGenericInstanceAtlasText;
 import tk.otanod.engine.render.RenderSkyBox;
 import tk.otanod.engine.render.RenderTerrainMultitexture;
 import tk.otanod.engine.terrain.RawTerrain;
@@ -53,7 +55,7 @@ public class Main {
 	private static final float FOV = 60;										// vertical vision angle (60º)
 	private static final double PITCH_SENSIBILITY = 150d / (double) HEIGHT;		// Higher values move the camera faster
 	private static final double YAW_SENSIBILITY = 150d / (double) WIDTH;		// Higher values move the camera faster
-	private static final float ZOOM_SENSIBILITY = 0.05f;						// Higher values move the camera faster
+	private static final float ZOOM_SENSIBILITY = 0.02f;						// Higher values move the camera faster
 	private static final float UP_SENSIBILITY = 0.05f;							// Higher values move the camera faster
 
 	private static Random random = new Random();
@@ -117,6 +119,9 @@ public class Main {
 		M4f m4Projection = new M4f(Camera.getProjectionMatrix(FOV, WIDTH/HEIGHT, 1.0f, 150.0f));			// 150 farZPlane ==> fogDensity = 0.02
 		
 		
+		/*******************************
+		 * SOLID OBJETS
+		 *******************************/
 		// 3D Flat terrain
 //		float width = 512.0f;
 //		int slices = 128;
@@ -148,6 +153,14 @@ public class Main {
 
 		
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		RawOBJ stall = OBJLoader.load("res/models/stall.obj");
+		RawImage textureImageStall = ImageFile.loadFlippedImageFile("res/drawable/stall.png");
+		int instancesStall = 3;
+		float[] instancesModelMatrixStall = createInstancesModelArray(1.5f, 1.5f, -60.0f, 60.0f, -60.0f, 60.0f, instancesStall);
+		Model stallModel = new RenderGenericInstance(instancesStall, instancesModelMatrixStall, stall, textureImageStall, camera, light, m4Projection);
+		models.add(stallModel);
+		
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
 		RawOBJ tree1 = OBJLoader.load("res/models/tree.obj");
 		RawImage textureImageTree1 = ImageFile.loadFlippedImageFile("res/drawable/tree.png");
 		int instancesTree1 = 50;
@@ -163,25 +176,29 @@ public class Main {
 		Model tree2Model = new RenderGenericInstance(instancesTree2, instancesModelMatrixTree2, tree2, textureImageTree2, camera, light, m4Projection);
 		models.add(tree2Model);
 		
-		// 3D model loaded from OBJ file drawn with indices and texture and MVP
-		RawOBJ tree3 = OBJLoader.load("res/models/pine_sorted.obj");
-		RawImage textureImageTree3 = ImageFile.loadFlippedImageFile("res/drawable/pine.png");
-		textureImageTree3.setTransparent(true);
-		int instancesTree3 = 20;
-		float[] instancesModelMatrixTree3 = createInstancesModelArray(3.0f, 4.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesTree3);
-		Model tree3Model = new RenderGenericInstance(instancesTree3, instancesModelMatrixTree3, tree3, textureImageTree3, camera, light, m4Projection);
-		models.add(tree3Model);
 		
-		// 3D model loaded from OBJ file drawn with indices and texture and MVP
-		RawOBJ fern = OBJLoader.load("res/models/fern.obj");
-		RawImage textureImageFern = ImageFile.loadFlippedImageFile("res/drawable/fern.png");
-		textureImageFern.setTransparent(true);
-		int instancesFern = 20;
-		float[] instancesModelMatrixFern = createInstancesModelArray(1.0f, 2.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesFern);
-		Model fernModel = new RenderGenericInstance(instancesFern, instancesModelMatrixFern, fern, textureImageFern, camera, light, m4Projection);
-		models.add(fernModel);
+		// SkyBox
+		// Skybox with individual images
+//		RawImagePack textureSkyBox = new RawImagePack(new String[] {
+//				"res/drawable/skybox4/right.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_X 	Right
+//				"res/drawable/skybox4/left.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_X 	Left
+//				"res/drawable/skybox4/top.png",			// GL_TEXTURE_CUBE_MAP_POSITIVE_Y 	Top
+//				"res/drawable/skybox4/bottom.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Y 	Bottom
+//				"res/drawable/skybox4/back.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_Z 	Back
+//				"res/drawable/skybox4/front.png"		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 	Front
+//		}, false);
+		// Skybox with 1 image	
+		RawImagePack textureSkyBox = new RawImagePack("res/drawable/skyboxClouds.png", 4, 4);			// skyboxTEST.png
+		
+		RawOBJ cube = RawOBJ.buildSkyBox();
+		Model skyBoxModel = new RenderSkyBox(new V3f(0.0f, 0.0f, 0.0f), new V3f(1.0f,1.0f,1.0f), cube, textureSkyBox, camera, light, m4Projection);
+		models.add(skyBoxModel);
 		
 		
+		
+		/*******************************
+		 * TRANSPARENT OBJETS
+		 *******************************/
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
 		RawOBJ grass = OBJLoader.load("res/models/grassY.obj");
 		RawImage textureImageGrass = ImageFile.loadFlippedImageFile("res/drawable/grass1.png");
@@ -192,32 +209,43 @@ public class Main {
 		models.add(grassModel);
 		
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
-		RawOBJ text = RawOBJ.buildQuad();
-		RawImage textureImageText = ImageFile.loadFlippedImageFile("res/fonts/arial.png");
+		RawOBJ tree3 = OBJLoader.load("res/models/pine_sorted.obj");
+		RawImage textureImageTree3 = ImageFile.loadFlippedImageFile("res/drawable/pine.png");
+		textureImageTree3.setTransparent(true);
+		int instancesTree3 = 60;
+		float[] instancesModelMatrixTree3 = createInstancesModelArray(3.0f, 4.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesTree3);
+		Model tree3Model = new RenderGenericInstance(instancesTree3, instancesModelMatrixTree3, tree3, textureImageTree3, camera, light, m4Projection);
+		models.add(tree3Model);
+		
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		RawOBJ fern = OBJLoader.load("res/models/fern.obj");
+		RawImage textureImageFern = ImageFile.loadFlippedImageFile("res/drawable/fern.png");
+		textureImageFern.setTransparent(true);
+		int instancesFern = 60;
+		float[] instancesModelMatrixFern = createInstancesModelArray(1.0f, 2.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesFern);
+		Model fernModel = new RenderGenericInstance(instancesFern, instancesModelMatrixFern, fern, textureImageFern, camera, light, m4Projection);
+		models.add(fernModel);
+	
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		RawOBJ textObj = RawOBJ.buildTextQuad();
+		RawImage textureImageText = ImageFile.loadImageFile("res/fonts/forte.png");
 		textureImageText.setTransparent(true);
-		Model textModel = new RenderGenericInstance(1, (new M4f()).scale(3.0f, 3.0f, 3.0f).getElements(), text, textureImageText, camera, light, m4Projection);
+		String str = "Hello World!";
+		FontEffect fe = new FontEffect(0.47f, 0.01f, 0.06f, 0.04f, new float[] {0f,0f}, FontEffect.RGBcolor(100, 161, 0), FontEffect.RGBcolor(145, 74, 0));
+		int instancesText = str.length();
+		Font f = new Font("res/fonts/forte.fnt");
+		float[] m4InstancesModel = f.buildInstancesModel(str);
+		float[] instancesTextureAtlasArea = f.buildInstancesTextureAtlasArea(str);
+		M4f stringModelMatrix = new M4f().scale(4.0f, 2.0f, 1.0f).rotateYaxisCCW(0d).setTranslate(0.0f, 1.0f, -15.0f);
+		Model textModel = new RenderGenericInstanceAtlasText(instancesText, stringModelMatrix, m4InstancesModel, instancesTextureAtlasArea, textObj, textureImageText, fe, camera, light, m4Projection);
 		models.add(textModel);
 		
-		// SkyBox
-		RawOBJ cube = RawOBJ.buildSkyBox();
-		// Skybox with individual images
-		//		RawImagePack textureSkyBox = new RawImagePack(new String[] {
-		//				"res/drawable/skybox4/right.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_X 	Right
-		//				"res/drawable/skybox4/left.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_X 	Left
-		//				"res/drawable/skybox4/top.png",			// GL_TEXTURE_CUBE_MAP_POSITIVE_Y 	Top
-		//				"res/drawable/skybox4/bottom.png",		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Y 	Bottom
-		//				"res/drawable/skybox4/back.png",		// GL_TEXTURE_CUBE_MAP_POSITIVE_Z 	Back
-		//				"res/drawable/skybox4/front.png"		// GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 	Front
-		//		}, false);
-		// Skybox with 1 image	
-		RawImagePack textureSkyBox = new RawImagePack("res/drawable/skyboxClouds.png", 4, 4);			// skyboxTEST.png
-		Model skyBoxModel = new RenderSkyBox(new V3f(0.0f, 0.0f, 0.0f), new V3f(1.0f,1.0f,1.0f), cube, textureSkyBox, camera, light, m4Projection);
-		models.add(skyBoxModel);
+
 		
 		// AWT - OpenGL window
 		Window w = new Window(WIDTH, HEIGHT, models);
 		// Init the windows/openGL
-		w.createDisplay("DEMO 12 - Instantiated draw");
+		w.createDisplay("DEMO 13 - Text");
 		// Attach the listeners
 		WindowListeners listener1 = new WindowListeners();
 		w.attachListener(listener1);

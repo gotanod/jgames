@@ -34,9 +34,8 @@ public class CanvasListener implements GLEventListener {
 	
 	@Override
 	public void init(GLAutoDrawable drawable) {
-		
-		System.out.println("init started");
-		System.out.println("GL thread : " + Thread.currentThread().getName());
+		debug("init", "started");
+		debug("GL thread", Thread.currentThread().getName());
 		
 		GL4ES3 gl = drawable.getGL().getGL4ES3();
 		
@@ -44,9 +43,39 @@ public class CanvasListener implements GLEventListener {
 		/// INITIALIZE OPEN GL
 		//////////////////////////////////////////////////////////////
 
+		debug("PROFILE", "" + gl.getGLProfile());
+		
 		// Display GPU card details
 		// cGLlibrary.displayGPUdetails(gl);
+		String glVersion = gl.glGetString(GL4ES3.GL_VERSION);
+		String glVendor = gl.glGetString(GL4ES3.GL_VENDOR);
+		String glRenderer = gl.glGetString(GL4ES3.GL_RENDERER);
+		String glShader = gl.glGetString(GL4ES3.GL_SHADING_LANGUAGE_VERSION);
+		String glNumExtensions = gl.glGetString(GL4ES3.GL_NUM_EXTENSIONS);
+		String glExtensions = gl.glGetString(GL4ES3.GL_EXTENSIONS);
 
+		debug("GL_VERSION", glVersion);
+		debug("GL_VENDOR", glVendor);
+		debug("GL_RENDERER", glRenderer);
+		debug("GL_SHADER_LANGUAGE_VERSION", glShader);
+		debug("GL_EXTENSIONS", glNumExtensions + " -> " + glExtensions);
+		// String s = gl.glGetString(GL4ES3.GL_EXTENSIONS);
+		// if (s.contains("GL_IMG_texture_compression_pvrtc")){
+		// 		// Use PVR compressed textures
+		// 		debug("GL", "PVRTC (PowerVR texture compression). Supported by devices with PowerVR GPUs (Nexus S, Kindle fire, etc.).");
+		// } else if (s.contains("GL_AMD_compressed_ATC_texture") || s.contains("GL_ATI_texture_compression_atitc")){
+		// 		// Load ATI Textures
+		// 		// https://developer.nvidia.com/gpu-accelerated-texture-compression
+		// 		debug("GL", "ATITC (ATI texture compression). Used in devices with Adreno GPU from Qualcomm (Nexus One, etc.).");
+		// } else if (s.contains("GL_OES_texture_compression_S3TC") || s.contains("GL_EXT_texture_compression_s3tc")){
+		// 		// Use DTX Textures
+		// 		// https://developer.nvidia.com/gpu-accelerated-texture-compression
+		// 		debug("GL", "S3TC (S3 texture compression). This texture compression is used in the NVIDIA chipset integrated devices (Motorola Xoom, etc.)");
+		// }else{
+		// 		//Handle no texture compression founded.
+		// 		debug("GL", "Maybe ETC1 (Ericsson texture compression). This format is supported by all Android phones. But, it doesn't support an alpha channel, so can only be used for opaque textures.");
+		// }
+		
 		// TODO: avoid limitation to 60FPS
 		gl.setSwapInterval(0); // MAX FPS, not limited to 60 FPS
 
@@ -119,27 +148,12 @@ public class CanvasListener implements GLEventListener {
 
 		//gl.glLineWidth(10); 				// for TEST when using lines
 
-		// String s = gl.glGetString(GL4ES3.GL_EXTENSIONS);
-		// if (s.contains("GL_IMG_texture_compression_pvrtc")){
-		// 		// Use PVR compressed textures
-		// 		debug("GL", "PVRTC (PowerVR texture compression). Supported by devices with PowerVR GPUs (Nexus S, Kindle fire, etc.).");
-		// } else if (s.contains("GL_AMD_compressed_ATC_texture") || s.contains("GL_ATI_texture_compression_atitc")){
-		// 		// Load ATI Textures
-		// 		// https://developer.nvidia.com/gpu-accelerated-texture-compression
-		// 		debug("GL", "ATITC (ATI texture compression). Used in devices with Adreno GPU from Qualcomm (Nexus One, etc.).");
-		// } else if (s.contains("GL_OES_texture_compression_S3TC") || s.contains("GL_EXT_texture_compression_s3tc")){
-		// 		// Use DTX Textures
-		// 		// https://developer.nvidia.com/gpu-accelerated-texture-compression
-		// 		debug("GL", "S3TC (S3 texture compression). This texture compression is used in the NVIDIA chipset integrated devices (Motorola Xoom, etc.)");
-		// }else{
-		// 		//Handle no texture compression founded.
-		// 		debug("GL", "Maybe ETC1 (Ericsson texture compression). This format is supported by all Android phones. But, it doesn't support an alpha channel, so can only be used for opaque textures.");
-		// }
-
 		// Get current canvas dimensions
 		gl.glViewport(6, 29, width-6, height-29);				// BUG: if you do not set up the view port, it uses full screen and it goes much slower!!!!
 		
-		System.out.println("init completed");
+		debug("Auto Swap Buffer", "" + drawable.getAutoSwapBufferMode());
+		//drawable.setAutoSwapBufferMode(true);
+		debug("init", "completed");
 	}
 
 	@Override
@@ -164,6 +178,12 @@ public class CanvasListener implements GLEventListener {
 		
 		// 4. update and display the FPS in the console
 		displayFPS(5);
+		
+		// 5. Swap buffers
+		// Swaps the front and back buffers of this drawable. For GLAutoDrawable implementations, 
+		// when automatic buffer swapping is enabled (as is the default), this method is called
+		// automatically and should not be called by the end user. 
+		// drawable.swapBuffers();
 	}
 
 	@Override
@@ -173,7 +193,7 @@ public class CanvasListener implements GLEventListener {
 		this.height = height;
 		gl.glViewport(x, y, width, height);
 		
-		System.out.println(String.format("Reshape => x: %d y: %d width: %d height: %d", x,y,width,height));
+		debug("reshape", String.format("Reshape => x: %d y: %d width: %d height: %d", x,y,width,height) );
 	}
 		
 	private long time1 = System.nanoTime();
@@ -194,6 +214,10 @@ public class CanvasListener implements GLEventListener {
 		} else {
 			FPS++;
 		}
+	}
+	
+	private void debug(String tag, String msg) {
+		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
 	}
 
 }

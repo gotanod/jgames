@@ -222,6 +222,6 @@ public final class ImageFile {
 	}
 
 	private static void debug(String tag, String msg) {
-		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+		//System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
 	}
 }

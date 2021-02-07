@@ -16,6 +16,7 @@ package tk.otanod.engine.awt;
 
 import java.awt.Frame;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
@@ -82,14 +83,21 @@ public class Window {
 	}
 
 	private GLCanvas createGLCanvas() {
+		// ALl available profiles
+		String supportedModes = GLProfile.glAvailabilityToString();
+		debug("Supported modes", supportedModes);
+		
+		// https://jogamp.org/deployment/jogamp-next/javadoc/jogl/javadoc/com/jogamp/opengl/GL4ES3.html
 		GLProfile profile = GLProfile.get(GLProfile.GL4ES3);				// OpenGL ES 3.0
-		// GLProfile profile = GLProfile.get(GLProfile.GL2);				// OpenGL 2.0
+		//GLProfile profile = GLProfile.get(GLProfile.GL2ES2);				// OpenGL ES 2.0
 		
 		GLCapabilities capabilities = new GLCapabilities(profile);
 		capabilities.setDepthBits(24);
 		capabilities.setSampleBuffers(true);								// Together with gl.glEnable(GL4ES3.GL_MULTISAMPLE);
 		capabilities.setNumSamples(4);										// Together with gl.glEnable(GL4ES3.GL_MULTISAMPLE);
-		//capabilities.setDoubleBuffered(true);	
+		//capabilities.setDoubleBuffered(true);
+		debug("GL HW acceleration", "" + capabilities.getHardwareAccelerated());
+		debug("GL doble buffer", "" + capabilities.getDoubleBuffered());
 
 		// Canvas
 		GLCanvas canvas = new GLCanvas(capabilities); 						// jogl
@@ -110,6 +118,9 @@ public class Window {
 	
 	private Frame createWindowAWT(String title) {
 
+		System.setProperty("sun.awt.noerasebackground", "true");
+		System.out.println(System.getProperties());
+		
 		Frame frame = new Frame(); 				// creating instance of JFrame
 		frame.setTitle(title); 			
 		frame.setLocation(new Point(WINDOW_TOP_LEFT_X, WINDOW_TOP_LEFT_Y)); // top-left corner distance to the top-left corner of the screen/monitor
@@ -172,6 +183,10 @@ public class Window {
 		if ( MouseWheelListener.class.isInstance(listener) ) {
 			this.canvas.addMouseWheelListener((MouseWheelListener) listener);
 		}
+	}
+	
+	private void debug(String tag, String msg) {
+		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
 	}
 	
 }
