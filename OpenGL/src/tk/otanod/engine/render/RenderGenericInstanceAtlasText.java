@@ -413,8 +413,8 @@ public class RenderGenericInstanceAtlasText implements Model {
 		// 4.6 Per instance
 		
 		// 4.7 Text Effects
-		gl.glUniform4f(this.aAttribLocation[ATTRIB_TEXT_WIDTH], this.fontEffect.getTextWidth(), this.fontEffect.getTextEdge(), this.fontEffect.getTextBorderWidth(), this.fontEffect.getTextBorderWidth());
-		gl.glUniform3fv(this.aAttribLocation[ATTRIB_TEXT_SHADOW_OFFSET],	1, this.fontEffect.getTextOffset(),  		0);
+		gl.glUniform4f(this.aAttribLocation[ATTRIB_TEXT_WIDTH], this.fontEffect.getTextWidth(), this.fontEffect.getTextEdge(), this.fontEffect.getTextBorderWidth(), this.fontEffect.getTextBorderEdge());
+		gl.glUniform2fv(this.aAttribLocation[ATTRIB_TEXT_SHADOW_OFFSET],	1, this.fontEffect.getTextOffset(),  		0);
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_TEXT_COLOR],			1, this.fontEffect.getTextColor(),   		0);
 		gl.glUniform3fv(this.aAttribLocation[ATTRIB_TEXT_BORDER_COLOR],		1, this.fontEffect.getTextBorderColor(),	0);
 		
@@ -618,8 +618,8 @@ public class RenderGenericInstanceAtlasText implements Model {
 				
 				//    Final color
 				+ "   vec4 finalColor =  vec4( ambient+diffuse+specular, 1.0 ) * textureColor; \n"
-//				+ "   gl_FragColor =  mix(vec4(uSkyColor,1.0), finalColor, fogVisibility); \n"					
-				+ "   gl_FragColor =  textureColor; \n"					
+				+ "   gl_FragColor =  mix(vec4(uSkyColor,1.0), finalColor, fogVisibility); \n"					
+//				+ "   gl_FragColor =  textureColor; \n"					
 			
 				+ "} ";
 						

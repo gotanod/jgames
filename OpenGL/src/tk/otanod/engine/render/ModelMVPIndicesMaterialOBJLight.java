@@ -35,7 +35,7 @@ import tk.otanod.libOBJ.RawOBJ;
 
 
 
-public class ModelMVPIndicesMaterialOBJLight implements GLEventListener {
+public class ModelMVPIndicesMaterialOBJLight implements Model {
 
     private int[] aAttribLocation = new int[15];
 	private static final int ATTRIB_POSITION = 0;
@@ -285,7 +285,7 @@ public class ModelMVPIndicesMaterialOBJLight implements GLEventListener {
 		
 		// Calculate the resultant Project-View-Model matrix
 		//M4f PVM = m4World.clone().scale(0.5f, 0.5f, 0.5f).rotateYaxisCCW(angleRadY).rotateXaxisCCW(angleRadX).setTranslate(-1.0f,  -1.0f,  -3.0f).preMultiply(m4View).preMultiply(m4Projection);
-		M4f M = m4World.clone().scale(1.2f, 1.2f, 1.2f).rotateYaxisCCW(angleRadY).rotateXaxisCCW(0.4f).setTranslate(1.1f,  1.0f,  -3.0f);
+		M4f M = m4World.clone().scale(1.0f, 1.0f, 1.0f).rotateYaxisCCW(angleRadY).rotateXaxisCCW(0.4f).setTranslate(1.0f,  1.0f,  -3.0f);
 		M4f PV = m4View.preMultiply(m4Projection);
 		
 		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_PV], 1, false, PV.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
@@ -626,5 +626,35 @@ public class ModelMVPIndicesMaterialOBJLight implements GLEventListener {
 	
 	private void debug(String tag, String msg) {
 		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+	}
+
+	@Override
+	public void update(float x, float y, float z, Camera camera, Light light, M4f projection) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void updatePosition(float x, float y, float z) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void updateScale(float xScale, float yScale, float zScale) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void update(Camera camera) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void update(Light light) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void update(M4f projection) {
+		// TODO Auto-generated method stub
 	}
 }

@@ -6,6 +6,8 @@ import com.jogamp.opengl.GL4ES3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
+import tk.otanod.engine.awt.WindowGlobalParameters;
+
 /*
 
 Copyright (c) <17 nov. 2020> <jdperezg@yahoo.es> All rights reserved.
@@ -23,13 +25,11 @@ SOFTWARE.
 public class CanvasListener implements GLEventListener {
 
 	private List<Model> models;
-	private int width;
-	private int height;
+	private WindowGlobalParameters params;
 	
-	public CanvasListener(List<Model> models, int width, int height) {
+	public CanvasListener(List<Model> models, WindowGlobalParameters params) {
 		this.models = models;
-		this.width = width;
-		this.height = height;
+		this.params = params;
 	}
 	
 	@Override
@@ -149,7 +149,8 @@ public class CanvasListener implements GLEventListener {
 		//gl.glLineWidth(10); 				// for TEST when using lines
 
 		// Get current canvas dimensions
-		gl.glViewport(6, 29, width-6, height-29);				// BUG: if you do not set up the view port, it uses full screen and it goes much slower!!!!
+		//gl.glViewport(6, 29, width-6, height-29);				// BUG: if you do not set up the view port, it uses full screen and it goes much slower!!!!
+		gl.glViewport(8, 39, this.params.getWindow_width_px()-8, this.params.getWindow_height_px()-39);				// BUG: if you do not set up the view port, it uses full screen and it goes much slower!!!!
 		
 		debug("Auto Swap Buffer", "" + drawable.getAutoSwapBufferMode());
 		//drawable.setAutoSwapBufferMode(true);
@@ -169,7 +170,8 @@ public class CanvasListener implements GLEventListener {
 
 		// 2. Clear the screen color and depth buffer
 		gl.glClearColor(0.5f, 0.5f, 0.95f, 1.0f);
-		gl.glClear(GL4ES3.GL_COLOR_BUFFER_BIT | GL4ES3.GL_DEPTH_BUFFER_BIT);
+//		gl.glClear(GL4ES3.GL_COLOR_BUFFER_BIT | GL4ES3.GL_DEPTH_BUFFER_BIT);  
+		gl.glClear(GL4ES3.GL_DEPTH_BUFFER_BIT);			// GL_COLOR_BUFFER_BIT is not needed because we redraw the full window. BUT it could be faster clearing the COLOR BUFFER in mobiles!!!
 
 		// 3. Draw all models
 		for( Model model: models ) {
@@ -177,7 +179,7 @@ public class CanvasListener implements GLEventListener {
 		}
 		
 		// 4. update and display the FPS in the console
-		displayFPS(5);
+		updateFPS(5);
 		
 		// 5. Swap buffers
 		// Swaps the front and back buffers of this drawable. For GLAutoDrawable implementations, 
@@ -189,8 +191,8 @@ public class CanvasListener implements GLEventListener {
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
 		GL4ES3 gl = drawable.getGL().getGL4ES3();
-		this.width = width;
-		this.height = height;
+		this.params.setWindow_width_px(width);
+		this.params.setWindow_height_px(height);
 		gl.glViewport(x, y, width, height);
 		
 		debug("reshape", String.format("Reshape => x: %d y: %d width: %d height: %d", x,y,width,height) );
@@ -199,22 +201,24 @@ public class CanvasListener implements GLEventListener {
 	private long time1 = System.nanoTime();
 	private long time2 = System.nanoTime();
 	private long delta = 0;
-	private int FPS = 0;
+	private int FPSticks = 0;
 	
-	private void displayFPS(int everySeconds) {
+	private void updateFPS(int everySeconds) {
 		long everyNanoSeconds = (long) (everySeconds * 1E9);
 		
 		time2 = System.nanoTime();
 		delta += time2 - time1;
 		time1 = time2;
 		if ( delta > everyNanoSeconds ) {
-			System.out.println("FPS: " + FPS/everySeconds);
+			this.params.setFPS(FPSticks / everySeconds);
+			debug("FPS","" + (FPSticks/everySeconds));
 			delta -= everyNanoSeconds;
-			FPS=0;
+			FPSticks=0;
 		} else {
-			FPS++;
+			FPSticks++;
 		}
 	}
+	
 	
 	private void debug(String tag, String msg) {
 		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);

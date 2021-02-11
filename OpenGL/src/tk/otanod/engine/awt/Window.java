@@ -14,9 +14,10 @@ SOFTWARE.
 
 package tk.otanod.engine.awt;
 
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Point;
-import java.awt.Toolkit;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
@@ -37,17 +38,13 @@ import tk.otanod.engine.render.Model;
 
 public class Window {
 	
-	private static final int WINDOW_TOP_LEFT_Y = 10;
-	private static final int WINDOW_TOP_LEFT_X = 10;
-	private static int HEIGHT = 768;
-	private static int WIDTH = 1024;
+	private WindowGlobalParameters params;
 	private Frame frame;
 	private GLCanvas canvas;
-	
 	List<Model> models;
-	public Window(int width, int height, List<Model> models) {
-		Window.WIDTH = width;
-		Window.HEIGHT = height;
+	
+	public Window(WindowGlobalParameters params, List<Model> models) {
+		this.params = params;
 		this.models = models;
 	}
 	
@@ -55,7 +52,11 @@ public class Window {
 		frame = createWindowAWT(title);
 		//frame = createWindowSWING(title);
 		canvas = createGLCanvas();
-		frame.add(canvas);
+		//frame.add(canvas).setPreferredSize(new Dimension(this.params.getWindow_width_px(), this.params.getWindow_height_px()));
+		Component component = frame.add(canvas);																			// add the GLCanvas to the frame
+		component.setPreferredSize(new Dimension(this.params.getWindow_width_px(), this.params.getWindow_height_px()));		// set the exact canvas size, ignoring window decoration
+		frame.pack();			// sets frame size to fit the canvas component size
+		
 		displayWindowAWT(frame);
 	}
 	
@@ -101,7 +102,7 @@ public class Window {
 
 		// Canvas
 		GLCanvas canvas = new GLCanvas(capabilities); 						// jogl
-		CanvasListener cl = new CanvasListener(models, WIDTH, HEIGHT);
+		CanvasListener cl = new CanvasListener(this.models, this.params);
 		canvas.addGLEventListener(cl);
 		
 		//frame.add(canvas);
@@ -123,15 +124,15 @@ public class Window {
 		
 		Frame frame = new Frame(); 				// creating instance of JFrame
 		frame.setTitle(title); 			
-		frame.setLocation(new Point(WINDOW_TOP_LEFT_X, WINDOW_TOP_LEFT_Y)); // top-left corner distance to the top-left corner of the screen/monitor
 		frame.setFocusable(true);
 		//frame.setUndecorated(true);
-		frame.setSize(WIDTH, HEIGHT);
-		frame.setResizable(false);
-		
+		frame.setResizable(true);
+		frame.setLocation(new Point(this.params.getWindow_xOffset(), this.params.getWindow_yOffset())); // top-left corner distance to the top-left corner of the screen/monitor
+		//frame.setSize(this.params.getWindow_width_px(), this.params.getWindow_height_px());
 		//frame.setExtendedState(Frame.MAXIMIZED_BOTH);
 		
 		//frame.setLayout(null);					//using no layout managers
+		
 		
 		return frame;
 	}
@@ -139,13 +140,16 @@ public class Window {
 	private JFrame createWindowSWING(String title) {
 		JFrame frame = new JFrame(); 				// creating instance of JFrame
 		frame.setTitle(title); 			
-		frame.setLocation(new Point(WINDOW_TOP_LEFT_X, WINDOW_TOP_LEFT_Y)); // top-left corner distance to the top-left corner of the screen/monitor
 		//frame.setUndecorated(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setFocusable(true);
-		frame.setSize(WIDTH, HEIGHT);
+		frame.setLocation(new Point(this.params.getWindow_xOffset(), this.params.getWindow_yOffset())); // top-left corner distance to the top-left corner of the screen/monitor
+		frame.setSize(this.params.getWindow_width_px(), this.params.getWindow_height_px());
 		frame.setResizable(false);
 		//frame.setExtendedState(Frame.MAXIMIZED_BOTH);  // full screen mode
+		
+//       frame.getContentPane().setPreferredSize(new Dimension(400, 400));
+//       frame.pack();
 		
 		//	frame.setLayout(null);					//using no layout managers
 		

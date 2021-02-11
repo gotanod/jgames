@@ -35,7 +35,7 @@ import tk.otanod.libOBJ.RawOBJ;
 
 
 
-public class ModelMVPIndicesTextureOBJLight implements GLEventListener {
+public class ModelMVPIndicesTextureOBJLight implements Model {
 
     private int[] aAttribLocation = new int[15];
 	private static final int ATTRIB_POSITION = 0;
@@ -677,5 +677,35 @@ public class ModelMVPIndicesTextureOBJLight implements GLEventListener {
 	
 	private void debug(String tag, String msg) {
 		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+	}
+
+	@Override
+	public void update(float x, float y, float z, Camera camera, Light light, M4f projection) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void updatePosition(float x, float y, float z) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void updateScale(float xScale, float yScale, float zScale) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void update(Camera camera) {
+		// TODO Auto-generated method stub	
+	}
+
+	@Override
+	public void update(Light light) {
+		// TODO Auto-generated method stub	
+	}
+
+	@Override
+	public void update(M4f projection) {
+		// TODO Auto-generated method stub	
 	}
 }

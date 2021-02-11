@@ -26,14 +26,17 @@ import tk.otanod.engine.awt.MouseListeners;
 import tk.otanod.engine.awt.Pointer;
 import tk.otanod.engine.awt.Pointer.State;
 import tk.otanod.engine.awt.Window;
+import tk.otanod.engine.awt.WindowGlobalParameters;
 import tk.otanod.engine.awt.WindowListeners;
 import tk.otanod.engine.camera.Camera;
 import tk.otanod.engine.font.Font;
 import tk.otanod.engine.font.FontEffect;
 import tk.otanod.engine.light.Light;
+import tk.otanod.engine.render.LayoutPercentage;
 import tk.otanod.engine.render.Model;
 import tk.otanod.engine.render.RenderGenericInstance;
 import tk.otanod.engine.render.RenderGenericInstanceAtlasText;
+import tk.otanod.engine.render.RenderGenericInstanceAtlasTextGUI;
 import tk.otanod.engine.render.RenderSkyBox;
 import tk.otanod.engine.render.RenderTerrainMultitexture;
 import tk.otanod.engine.terrain.RawTerrain;
@@ -46,12 +49,14 @@ import tk.otanod.libMath.V3f;
 import tk.otanod.libOBJ.OBJLoader;
 import tk.otanod.libOBJ.RawOBJ;
 
+
 public class Main {
 
 	// https://upload.wikimedia.org/wikipedia/commons/0/0c/Vector_Video_Standards8.svg
 	// HD 720
-	private static final int WIDTH = 1280;
-	private static final int HEIGHT = 720;
+	private static int WIDTH = 1280;
+	private static int HEIGHT = 720;
+	private static int FPS = 60;
 	private static final float FOV = 60;										// vertical vision angle (60º)
 	private static final double PITCH_SENSIBILITY = 150d / (double) HEIGHT;		// Higher values move the camera faster
 	private static final double YAW_SENSIBILITY = 150d / (double) WIDTH;		// Higher values move the camera faster
@@ -66,29 +71,6 @@ public class Main {
 		
 		List<Model> models = new ArrayList<>();
 		
-//		List<GLEventListener> models = new ArrayList<>();
-		// 3D model drawn with Arrays
-//		GLEventListener m1 = new ModelArray();
-//		models.add(m1);
-		// 3D model drawn with indices
-//		GLEventListener m2 = new ModelIndices();
-//		models.add(m2);
-		// 3D model drawn with indices and texture
-//		GLEventListener m3 = new ModelIndicesTexture();
-//		models.add(m3);
-		// 3D model drawn with indices and texture and MVP
-//		GLEventListener m4 = new ModelMVPIndicesTexture();
-//		models.add(m4);
-		// 3D model loaded from OBJ file drawn with indices and texture and MVP
-//		GLEventListener m5 = new ModelMVPIndicesTextureOBJ();
-//		models.add(m5);
-		// 3D model loaded from OBJ file drawn with indices and texture and MVP
-//		GLEventListener m6 = new ModelMVPIndicesTextureOBJLight();
-//		models.add(m6);
-		// 3D model loaded from OBJ file drawn with indices and material and MVP
-//		GLEventListener m7 = new ModelMVPIndicesMaterialOBJLight();
-//		models.add(m7);
-
 		// Common environment for all the models
 		/*********************
 		 *  Light
@@ -119,6 +101,32 @@ public class Main {
 		M4f m4Projection = new M4f(Camera.getProjectionMatrix(FOV, WIDTH/HEIGHT, 1.0f, 150.0f));			// 150 farZPlane ==> fogDensity = 0.02
 		
 		
+		/*********************
+		 *  Models
+		 *********************/
+//		List<GLEventListener> models = new ArrayList<>();
+		// 3D model drawn with Arrays
+//		Model m1 = new ModelArray();
+//		models.add(m1);
+		// 3D model drawn with indices
+//		Model m2 = new ModelIndices();
+//		models.add(m2);
+		// 3D model drawn with indices and texture
+//		Model m3 = new ModelIndicesTexture();
+//		models.add(m3);
+		// 3D model drawn with indices and texture and MVP
+//		Model m4 = new ModelMVPIndicesTexture();
+//		models.add(m4);
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+//		Model m5 = new ModelMVPIndicesTextureOBJ();
+//		models.add(m5);
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+//		Model m6 = new ModelMVPIndicesTextureOBJLight();
+//		models.add(m6);		// add after solid objects
+		// 3D model loaded from OBJ file drawn with indices and material and MVP
+//		Model m7 = new ModelMVPIndicesMaterialOBJLight();
+//		models.add(m7);		// add after solid objects	
+			
 		/*******************************
 		 * SOLID OBJETS
 		 *******************************/
@@ -140,7 +148,7 @@ public class Main {
 				"res/drawable/grassFlowers.png",
 				"res/drawable/path.png",
 				"res/drawable/blendMap.png"
-		}, true);
+			}, true);
 		Model t2 = new RenderTerrainMultitexture(new V3f(-width/2.0f, 0f, -width/2.0f), new V3f(1f,1f,1f), terrain, textureImageGroundPack, camera, light, m4Projection);
 		models.add(t2);
 		
@@ -150,8 +158,7 @@ public class Main {
 //		RawImage textureImageDragon = ImageFile.loadFlippedImageFile("res/drawable/white.png");
 //		Model d = new RenderGeneric(new V3f(0f, 0f, -30f), new V3f(.2f,.2f,.2f), dragon, textureImageDragon, camera, light, m4Projection);
 //		models.add(d);
-
-		
+			
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
 		RawOBJ stall = OBJLoader.load("res/models/stall.obj");
 		RawImage textureImageStall = ImageFile.loadFlippedImageFile("res/drawable/stall.png");
@@ -159,7 +166,7 @@ public class Main {
 		float[] instancesModelMatrixStall = createInstancesModelArray(1.5f, 1.5f, -60.0f, 60.0f, -60.0f, 60.0f, instancesStall);
 		Model stallModel = new RenderGenericInstance(instancesStall, instancesModelMatrixStall, stall, textureImageStall, camera, light, m4Projection);
 		models.add(stallModel);
-		
+			
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
 		RawOBJ tree1 = OBJLoader.load("res/models/tree.obj");
 		RawImage textureImageTree1 = ImageFile.loadFlippedImageFile("res/drawable/tree.png");
@@ -199,6 +206,7 @@ public class Main {
 		/*******************************
 		 * TRANSPARENT OBJETS
 		 *******************************/
+		
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
 		RawOBJ grass = OBJLoader.load("res/models/grassY.obj");
 		RawImage textureImageGrass = ImageFile.loadFlippedImageFile("res/drawable/grass1.png");
@@ -227,25 +235,62 @@ public class Main {
 		models.add(fernModel);
 	
 		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		String fontName;
+//		fontName = "Allura-Regular";
+//		fontName = "Arabella";
+//		fontName = "Ubuntu-R";
+//		fontName = "QUIGLEYW";
+//		fontName = "Qwigley-Regular";
+//		fontName = "Odin-Rounded-Regular";
+//		fontName = "Courier Prime Sans";
+		fontName = "LeckerliOne-Regular";
+//		fontName = "Carten";
+	
 		RawOBJ textObj = RawOBJ.buildTextQuad();
-		RawImage textureImageText = ImageFile.loadImageFile("res/fonts/forte.png");
+		RawImage textureImageText = ImageFile.loadImageFile("res/fonts/" + fontName + ".png");
 		textureImageText.setTransparent(true);
 		String str = "Hello World!";
 		FontEffect fe = new FontEffect(0.47f, 0.01f, 0.06f, 0.04f, new float[] {0f,0f}, FontEffect.RGBcolor(100, 161, 0), FontEffect.RGBcolor(145, 74, 0));
 		int instancesText = str.length();
-		Font f = new Font("res/fonts/forte.fnt");
-		float[] m4InstancesModel = f.buildInstancesModel(str);
+		Font f = new Font("res/fonts/" + fontName + ".fnt");
+		float[] m4InstancesModel = f.buildInstancesModel(str, -0.5f, 1.0f);
 		float[] instancesTextureAtlasArea = f.buildInstancesTextureAtlasArea(str);
 		M4f stringModelMatrix = new M4f().scale(4.0f, 2.0f, 1.0f).rotateYaxisCCW(0d).setTranslate(0.0f, 1.0f, -15.0f);
 		Model textModel = new RenderGenericInstanceAtlasText(instancesText, stringModelMatrix, m4InstancesModel, instancesTextureAtlasArea, textObj, textureImageText, fe, camera, light, m4Projection);
 		models.add(textModel);
 		
-
+		// GUI Text
+		fontName = "Ubuntu-R";
+		RawOBJ textGUI = RawOBJ.buildTextQuad();
+		RawImage textureImageTextGUI = ImageFile.loadImageFile("res/fonts/" + fontName + ".png");
+		textureImageTextGUI.setTransparent(true);
+		Font fontGUI = new Font("res/fonts/" + fontName + ".fnt");
+		FontEffect fontEffectTextGUI = new FontEffect(0.48f, 0.05f, 0.12f, 0.05f, new float[] {0f,0f}, FontEffect.RGBcolor(255, 255, 255), FontEffect.RGBcolor(0, 0, 0));
+		String strGUI = getElpasedTimeString(System.nanoTime());
+		int instancesTextGUI = strGUI.length();
+		float[] m4InstancesModelGUI = fontGUI.buildInstancesModel(strGUI, 0.0f, 1.0f);
+		float[] instancesTextureAtlasAreaGUI = fontGUI.buildInstancesTextureAtlasArea(strGUI);
+		//M4f stringModelMatrixGUI = (new LayoutPercentage(0.0f, 100.0f, 0.0f, 10.0f, 5.0f, 0.0f)).getMatrix();
+		M4f stringModelMatrixGUI = (new LayoutPercentage(1.0f, 5.0f, 25.0f, 5.0f)).getMatrix();
+		Model texGUItModel = new RenderGenericInstanceAtlasTextGUI(instancesTextGUI, stringModelMatrixGUI, m4InstancesModelGUI, instancesTextureAtlasAreaGUI, textGUI, textureImageTextGUI, fontEffectTextGUI);
+		models.add(texGUItModel);
 		
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+//		Model m6 = new ModelMVPIndicesTextureOBJLight();
+//		models.add(m6);		// add after solid objects
+		// 3D model loaded from OBJ file drawn with indices and material and MVP
+//		Model m7 = new ModelMVPIndicesMaterialOBJLight();
+//		models.add(m7);		// add after solid objects
+		
+
+		/*********************
+		 *  Window
+		 *********************/
+		WindowGlobalParameters params = new WindowGlobalParameters(WIDTH, HEIGHT, FPS);
 		// AWT - OpenGL window
-		Window w = new Window(WIDTH, HEIGHT, models);
+		Window w = new Window(params, models);
 		// Init the windows/openGL
-		w.createDisplay("DEMO 13 - Text");
+		w.createDisplay("DEMO 14 - GUI Text");
 		// Attach the listeners
 		WindowListeners listener1 = new WindowListeners();
 		w.attachListener(listener1);
@@ -255,10 +300,12 @@ public class Main {
 		MouseListeners listener2 = new MouseListeners(pointersQueue, pointersMap);
 		w.attachListener(listener2);
 
-		// Display the window (loop)
-		// 1. User input
+		/*********************
+		 *  Game Loop
+		 *********************/
 		Pointer pointer;
 		while ( true ) {			
+			// 1. User input
 			while ( (pointer = pointersQueue.pollFirst() ) != null ) {
 				// Camera LookAt
 				if ( pointer.getPointerID() == 1 ) {
@@ -287,6 +334,15 @@ public class Main {
 			}				
 			
 			
+			// Game updates
+			if ( true == logicTick(1f) ) {
+				strGUI = getElpasedTimeString(System.nanoTime()) + "  FPS " + params.getFPS() + " Screen " + params.getWindow_width_px() + "x" + params.getWindow_height_px();
+				instancesTextGUI = strGUI.length();
+				m4InstancesModelGUI = fontGUI.buildInstancesModel(strGUI, 0.0f, 1.0f);
+				instancesTextureAtlasAreaGUI = fontGUI.buildInstancesTextureAtlasArea(strGUI);
+				((RenderGenericInstanceAtlasTextGUI) texGUItModel).update(instancesTextGUI, m4InstancesModelGUI, instancesTextureAtlasAreaGUI);
+			}
+
 			// 2. update the camera
 			for (Model model: models) {
 				model.update(camera);
@@ -315,6 +371,41 @@ public class Main {
 			System.arraycopy(m4.getElements(), 0, instancesModelMatrix, i*16, 16);		// arraycopy(Object src, int srcPos, Object dest, int destPos, int length)
 		}
 		return instancesModelMatrix;
+	}
+	
+	private static long startTime = System.nanoTime();
+	private static String getElpasedTimeString(long now) {
+		float nowSeconds = (now - startTime) / 1E9f;
+		String mTime = String.format("Time %02.0f:%02.0f", Math.floor(nowSeconds / 60.0f), nowSeconds % 60); 	
+		return mTime;
+	}
+	
+	private static String getElpasedTimeDeciSecondsString(long now) {
+		float nowMilliSeconds = (now - startTime) / 1E6f;
+		String mTime = String.format("Time %02.0f:%02.0f:%01.0f", Math.floor(nowMilliSeconds / 60000.0f), (nowMilliSeconds / 1000f) % 60, (nowMilliSeconds / 100f) % 10); 	
+		return mTime;
+	}
+	
+	private static long time1 = System.nanoTime();
+	private static long time2 = System.nanoTime();
+	private static long delta = 0;
+	
+	private static boolean logicTick(float everySeconds) {
+		boolean update = false;
+		
+		long everyNanoSeconds = (long) (everySeconds * 1E9);
+		
+		time2 = System.nanoTime();
+		delta += time2 - time1;
+		time1 = time2;
+		if ( delta > everyNanoSeconds ) {
+			update = true;
+			delta -= everyNanoSeconds;
+		} else {
+			update = false;
+		}
+		
+		return update;
 	}
 	
 }

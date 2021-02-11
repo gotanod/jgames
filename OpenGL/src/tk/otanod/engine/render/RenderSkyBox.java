@@ -374,7 +374,7 @@ public class RenderSkyBox implements Model {
 		// When using glDrawElements we're going to draw using indices provided in the element buffer object currently bound:
 		// Leave the ELEMENT_ARRAY_BUFFER bound inside the VAO, just avoid the unbind after creating it. And you don't need to call it here if it is already bound!!!
 		// gl.glBindBuffer(GL4ES3.GL_ELEMENT_ARRAY_BUFFER, this.vbos[0]); 
-		gl.glDepthFunc(GL4ES3.GL_LEQUAL); 			// required for SkyBox trick pos.xyww
+		gl.glDepthFunc(GL4ES3.GL_LEQUAL); 													// required for SkyBox trick pos.xyww
 		gl.glDrawElements(GL4ES3.GL_TRIANGLES, this.nElements, GL4ES3.GL_UNSIGNED_INT, 0); 	// DrawElements triangles, count, type,  OFFSET
 		gl.glDepthFunc(GL4ES3.GL_LESS);
 		

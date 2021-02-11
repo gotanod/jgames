@@ -206,13 +206,16 @@ public class Font {
 		return height;
 	}
 
-	public float[] buildInstancesModel(String str) {
+	public float[] buildInstancesModel(String str, float left, float width) {
 		// Build the model matrix for each character
 		// The whole string is inside a unitary box  x=[-0.5, 0.5]  y=[0.0, 1.0]
+		// The whole string is inside a box  x=[left, left+width]  y=[0.0, 1.0]
 		// With the String model matrix you can scale, rotate and translate this box
-		float x0 = -0.5f;
-		float worldWidth = 1.0f;
+		float x0 = left;
+		float worldWidth = width;
 		float worldHeight = 1.0f;
+		float z0 = 0.0f;
+		float z0Offset = 0.0001f; // avoids flicker when two quads are on top of each other
 		
 		
 		int instances = str.length();		
@@ -269,7 +272,8 @@ public class Font {
 			float yScale = g.gettHeight() * scaleV;
 			float xOffset = g.getxOffset() * scaleH;
 			float yOffset = (maxHeight - g.getyOffset() - g.gettHeight()) * scaleV;
-			M4f m4 = (new M4f()).setScale(xScale, yScale, 1.0f).setTranslate(cursorPos + xOffset,  yOffset, 0.0f);		
+			M4f m4 = (new M4f()).setScale(xScale, yScale, 1.0f).setTranslate(cursorPos + xOffset,  yOffset, z0);
+			z0 += z0Offset;
 			System.arraycopy(m4.getElements(), 0, m4InstancesModel, 16*i, 16);
 			
 			cursorPos += g.getxAdvance() * scaleH;		

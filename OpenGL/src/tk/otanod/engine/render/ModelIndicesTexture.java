@@ -23,11 +23,14 @@ import com.jogamp.opengl.GL4ES3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
+import tk.otanod.engine.camera.Camera;
+import tk.otanod.engine.light.Light;
 import tk.otanod.libIO.ImageFile;
 import tk.otanod.libIO.RawImage;
+import tk.otanod.libMath.M4f;
 
 
-public class ModelIndicesTexture implements GLEventListener {
+public class ModelIndicesTexture implements Model {
 
     private int[] aAttribLocation = new int[10];
 	private static final int ATTRIB_POSITION = 0;
@@ -531,5 +534,35 @@ public class ModelIndicesTexture implements GLEventListener {
 	
 	private void debug(String tag, String msg) {
 		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+	}
+
+	@Override
+	public void update(float x, float y, float z, Camera camera, Light light, M4f projection) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void updatePosition(float x, float y, float z) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void updateScale(float xScale, float yScale, float zScale) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void update(Camera camera) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void update(Light light) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void update(M4f projection) {
+		// TODO Auto-generated method stub
 	}
 }

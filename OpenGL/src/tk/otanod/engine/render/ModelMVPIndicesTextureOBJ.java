@@ -24,6 +24,7 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
 import tk.otanod.engine.camera.Camera;
+import tk.otanod.engine.light.Light;
 import tk.otanod.libIO.ImageFile;
 import tk.otanod.libIO.RawImage;
 import tk.otanod.libMath.M4f;
@@ -33,7 +34,7 @@ import tk.otanod.libOBJ.RawOBJ;
 
 
 
-public class ModelMVPIndicesTextureOBJ implements GLEventListener {
+public class ModelMVPIndicesTextureOBJ implements Model {
 
     private int[] aAttribLocation = new int[10];
 	private static final int ATTRIB_POSITION = 0;
@@ -143,7 +144,7 @@ public class ModelMVPIndicesTextureOBJ implements GLEventListener {
 		RawImage tex;
 		textureUnit = TextureUnitManager.getInstance().getTextureNumber();
 		gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + textureUnit);  				// activate the texture unit first before binding texture
-		tex = ImageFile.loadFlippedImageFile("res/models/stallTexture.png");
+		tex = ImageFile.loadFlippedImageFile("res/drawable/stall.png");
 		createTextureBitmapRGBA(gl, this.textureIDs[0], tex);
 		
 		tex = null;			// after creating the texture (GPU) the image is no longer needed
@@ -290,7 +291,7 @@ public class ModelMVPIndicesTextureOBJ implements GLEventListener {
 		
 		// Calculate the resultant Project-View-Model matrix
 		//M4f PVM = m4World.clone().scale(0.5f, 0.5f, 0.5f).rotateYaxisCCW(angleRadY).rotateXaxisCCW(angleRadX).setTranslate(-1.0f,  -1.0f,  -3.0f).preMultiply(m4View).preMultiply(m4Projection);
-		M4f PVM = m4World.clone().scale(0.15f, 0.15f, 0.15f).rotateYaxisCCW(angleRadY).setTranslate(-1.0f,  -1.0f,  -3.0f).preMultiply(m4View).preMultiply(m4Projection);
+		M4f PVM = m4World.clone().scale(0.5f, 0.5f, 0.5f).rotateYaxisCCW(angleRadY).setTranslate(-1.0f,  -1.0f,  -3.0f).preMultiply(m4View).preMultiply(m4Projection);
 		
 		gl.glUniformMatrix4fv(this.aAttribLocation[ATTRIB_MVP], 1, false, PVM.getElements(),	0);	// glUniformMatrix4fv(int location, int count, boolean transpose, float[] value, int value_offset)
 		
@@ -530,5 +531,41 @@ public class ModelMVPIndicesTextureOBJ implements GLEventListener {
 	
 	private void debug(String tag, String msg) {
 		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+	}
+
+	
+	@Override
+	public void update(float x, float y, float z, Camera camera, Light light, M4f projection) {
+		// TODO Auto-generated method stub
+	}
+	
+
+	@Override
+	public void updatePosition(float x, float y, float z) {
+		// TODO Auto-generated method stub
+	}
+	
+
+	@Override
+	public void updateScale(float xScale, float yScale, float zScale) {
+		// TODO Auto-generated method stub
+	}
+	
+
+	@Override
+	public void update(Camera camera) {
+		// TODO Auto-generated method stub
+	}
+	
+
+	@Override
+	public void update(Light light) {
+		// TODO Auto-generated method stub
+	}
+	
+
+	@Override
+	public void update(M4f projection) {
+		// TODO Auto-generated method stub
 	}
 }
