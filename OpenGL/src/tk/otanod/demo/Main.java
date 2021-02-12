@@ -147,7 +147,7 @@ public class Main {
 				"res/drawable/mud.png",
 				"res/drawable/grassFlowers.png",
 				"res/drawable/path.png",
-				"res/drawable/blendMap.png"
+				"res/drawable/blendMap1.png"
 			}, true);
 		Model t2 = new RenderTerrainMultitexture(new V3f(-width/2.0f, 0f, -width/2.0f), new V3f(1f,1f,1f), terrain, textureImageGroundPack, camera, light, m4Projection);
 		models.add(t2);
@@ -163,7 +163,7 @@ public class Main {
 		RawOBJ stall = OBJLoader.load("res/models/stall.obj");
 		RawImage textureImageStall = ImageFile.loadFlippedImageFile("res/drawable/stall.png");
 		int instancesStall = 3;
-		float[] instancesModelMatrixStall = createInstancesModelArray(1.5f, 1.5f, -60.0f, 60.0f, -60.0f, 60.0f, instancesStall);
+		float[] instancesModelMatrixStall = createInstancesModelArray(1.5f, 1.5f, -80.0f, 80.0f, -80.0f, 80.0f, instancesStall);
 		Model stallModel = new RenderGenericInstance(instancesStall, instancesModelMatrixStall, stall, textureImageStall, camera, light, m4Projection);
 		models.add(stallModel);
 			
@@ -171,7 +171,7 @@ public class Main {
 		RawOBJ tree1 = OBJLoader.load("res/models/tree.obj");
 		RawImage textureImageTree1 = ImageFile.loadFlippedImageFile("res/drawable/tree.png");
 		int instancesTree1 = 50;
-		float[] instancesModelMatrixTree1 = createInstancesModelArray(3.0f, 4.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesTree1);
+		float[] instancesModelMatrixTree1 = createInstancesModelArray(3.0f, 4.0f, -80.0f, 80.0f, -80.0f, 80.0f, instancesTree1);
 		Model tree1Model = new RenderGenericInstance(instancesTree1, instancesModelMatrixTree1, tree1, textureImageTree1, camera, light, m4Projection);
 		models.add(tree1Model);
 		
@@ -179,9 +179,17 @@ public class Main {
 		RawOBJ tree2 = OBJLoader.load("res/models/lowPolyTree.obj");
 		RawImage textureImageTree2 = ImageFile.loadFlippedImageFile("res/drawable/lowPolyTree.png");
 		int instancesTree2 = 50;
-		float[] instancesModelMatrixTree2 = createInstancesModelArray(5.0f, 6.0f, -60.0f, 60.0f, -60.0f, 60.0f, instancesTree2);
+		float[] instancesModelMatrixTree2 = createInstancesModelArray(5.0f, 6.0f, -80.0f, 80.0f, -80.0f, 80.0f, instancesTree2);
 		Model tree2Model = new RenderGenericInstance(instancesTree2, instancesModelMatrixTree2, tree2, textureImageTree2, camera, light, m4Projection);
 		models.add(tree2Model);
+		
+		// 3D model loaded from OBJ file drawn with indices and texture and MVP
+		RawOBJ lamp = OBJLoader.load("res/models/lamp.obj");
+		RawImage textureImageLamp = ImageFile.loadFlippedImageFile("res/drawable/lamp.png");
+		int instancesLamp = 5;
+		float[] instancesModelMatrixLamp = createInstancesModelArray(4.5f, 4.5f, -60.0f, 60.0f, -60.0f, 60.0f, instancesLamp);
+		Model lampModel = new RenderGenericInstance(instancesLamp, instancesModelMatrixLamp, lamp, textureImageLamp, camera, light, m4Projection);
+		models.add(lampModel);
 		
 		
 		// SkyBox
@@ -290,7 +298,7 @@ public class Main {
 		// AWT - OpenGL window
 		Window w = new Window(params, models);
 		// Init the windows/openGL
-		w.createDisplay("DEMO 14 - GUI Text");
+		w.createDisplay("DEMO 15 - Anisotropic");
 		// Attach the listeners
 		WindowListeners listener1 = new WindowListeners();
 		w.attachListener(listener1);

@@ -120,7 +120,7 @@ public class Window {
 	private Frame createWindowAWT(String title) {
 
 		System.setProperty("sun.awt.noerasebackground", "true");
-		System.out.println(System.getProperties());
+		debug("SYSTEM PROPERTIES", "" + System.getProperties());
 		
 		Frame frame = new Frame(); 				// creating instance of JFrame
 		frame.setTitle(title); 			

@@ -239,7 +239,7 @@ public class RenderTerrainMultitexture implements Model {
 			RawImage textureImage = this.textureImagePack.getRawImage(i);
 			textureUnits[i] = TextureUnitManager.getInstance().getTextureNumber(textureImage.name);		// Get texture unit form centralized class to avoid conflict with other classes using also TEXTURE units
 			gl.glActiveTexture(GL4ES3.GL_TEXTURE0 + textureUnits[i]);  									// activate the texture unit first before binding texture
-			createTextureBitmapRGBA(gl, this.textureIDs[i], textureImage);
+			createTextureBitmapRGBAAnisotropic(gl, this.textureIDs[i], textureImage);
 			debug("GL TEXTURE", textureImage.name + ", " + this.textureIDs[i] + ", " + textureUnits[i]); 
 		}
         
@@ -657,6 +657,43 @@ public class RenderTerrainMultitexture implements Model {
 	}	
 
 	public void createTextureBitmapRGBA(GL4ES3 gl, int textureID, RawImage tex) {
+		
+		gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
+		//gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);
+		
+		// Scale up/down if the texture if smaller.      
+		// GL_NEAREST - no filtering, no mipmaps
+		// GL_LINEAR - filtering, no mipmaps
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER, GL4ES3.GL_LINEAR);		// scale linearly when image smaller than texture
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER, GL4ES3.GL_LINEAR);
+		
+		// Use mipmaps. Scale up/down if the texture if smaller.
+		// GL_NEAREST_MIPMAP_NEAREST - no filtering, sharp switching between mipmaps
+		// GL_NEAREST_MIPMAP_LINEAR - no filtering, smooth transition between mipmaps
+		// GL_LINEAR_MIPMAP_NEAREST - filtering, sharp switching between mipmaps
+		// GL_LINEAR_MIPMAP_LINEAR - filtering, smooth transition between mipmaps
+		gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER,   GL4ES3.GL_LINEAR);	// Magnifier only supports GL_LINEAR or GL_NEAREST
+		gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER,  GL4ES3.GL_LINEAR);	// down
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAX_LOD, 1000.0f);
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_LOD, -1000.0f);
+		
+		// what to do if not enough image
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
+		gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
+		gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
+		
+		//System.out.println(">> TEXTURE 4 channels");
+		//GL2ES2.texImage2D(GL2ES2.GL_TEXTURE_2D, 0, GL2ES2.GL_RGBA, GL2ES2.GL_RGBA, GL2ES2.GL_UNSIGNED_BYTE, bitmap);  
+		gl.glTexImage2D(GL4ES3.GL_TEXTURE_2D, 0, GL4ES3.GL_SRGB_ALPHA, tex.width, tex.height, 0, GL4ES3.GL_RGBA, GL4ES3.GL_UNSIGNED_BYTE, tex.byteDataBuffer);       	       	      	       	
+		
+		//Sets the object texture to the new created texture
+		//gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, 0);
+		
+		return;
+	}
+	
+	public void createTextureBitmapRGBAMIPMAP(GL4ES3 gl, int textureID, RawImage tex) {
     	
 		gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
 		//gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);
@@ -696,8 +733,61 @@ public class RenderTerrainMultitexture implements Model {
         return;
 	}
 	
+	public void createTextureBitmapRGBAAnisotropic(GL4ES3 gl, int textureID, RawImage tex) {
+		
+		gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, textureID);
+		//gl.pixelStorei(GL2ES2.GL_UNPACK_FLIP_Y_WEBGL, true);
+		
+		// Scale up/down if the texture if smaller.      
+		// GL_NEAREST - no filtering, no mipmaps
+		// GL_LINEAR - filtering, no mipmaps
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER, GL4ES3.GL_LINEAR);		// scale linearly when image smaller than texture
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER, GL4ES3.GL_LINEAR);
+		
+		// Use mipmaps. Scale up/down if the texture if smaller.
+		// GL_NEAREST_MIPMAP_NEAREST - no filtering, sharp switching between mipmaps
+		// GL_NEAREST_MIPMAP_LINEAR - no filtering, smooth transition between mipmaps
+		// GL_LINEAR_MIPMAP_NEAREST - filtering, sharp switching between mipmaps
+		// GL_LINEAR_MIPMAP_LINEAR - filtering, smooth transition between mipmaps
+		gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAG_FILTER,   GL4ES3.GL_LINEAR);	// Magnifier only supports GL_LINEAR or GL_NEAREST
+		gl.glTexParameteri(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_FILTER,  GL4ES3.GL_LINEAR_MIPMAP_LINEAR);	// down
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAX_LOD, 1000.0f);
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MIN_LOD, -1000.0f);
+		
+		// what to do if not enough image
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
+		//gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_CLAMP_TO_EDGE);		// avoids the square border around transparent quads
+		gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_S, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
+		gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_WRAP_T, GL4ES3.GL_REPEAT);				// to repeat the exture n times inside the quad
+		
+		// improve MIPMAPS with ANISOTROPIC options (not square mipmaps)
+		boolean isEXTavailable = gl.isExtensionAvailable("GL_EXT_texture_filter_anisotropic");
+		if ( isEXTavailable ) {
+			float[] tmp = new float[1];
+			gl.glGetFloatv(GL4ES3.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, tmp, 0);
+			float amount = Math.min(4.0f,  tmp[0]);															// higher value, high impact in the performance
+			gl.glTexParameterf(GL4ES3.GL_TEXTURE_2D, GL4ES3.GL_TEXTURE_MAX_ANISOTROPY_EXT, amount);
+			debug("TEXTURE", "GL_EXT_texture_filter_anisotropic used");
+		} else {
+			debug("TEXTURE", "GL_EXT_texture_filter_anisotropic not available");
+		}
+		
+		
+		//System.out.println(">> TEXTURE 4 channels");
+		//GL2ES2.texImage2D(GL2ES2.GL_TEXTURE_2D, 0, GL2ES2.GL_RGBA, GL2ES2.GL_RGBA, GL2ES2.GL_UNSIGNED_BYTE, bitmap);  
+		gl.glTexImage2D(GL4ES3.GL_TEXTURE_2D, 0, GL4ES3.GL_SRGB_ALPHA, tex.width, tex.height, 0, GL4ES3.GL_RGBA, GL4ES3.GL_UNSIGNED_BYTE, tex.byteDataBuffer);       	       	      	       	
+		
+		// Generate MIPMAPs
+		gl.glGenerateMipmap(GL4ES3.GL_TEXTURE_2D);
+		
+		//Sets the object texture to the new created texture
+		//gl.glBindTexture(GL4ES3.GL_TEXTURE_2D, 0);
+		
+		return;
+	}
+	
 	private void debug(String tag, String msg) {
-		//System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
+		System.out.println(">>> DEBUG >>> " + tag + " >>> " + msg);
 	}
 
 }
